@@ -5,27 +5,21 @@ const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const WebSocket = require('ws');
+const connectDB = require('./db'); // 引入数据库连接模块
 
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth'); // 导入用户认证路由
 const gymRoutes = require('./routes/gym');
 const communityRoutes = require('./routes/community'); // 确保路径正确
 const studyRoutes = require('./routes/study');
-const app = express(); // 初始化 Express 应用
 const friendRequestRouter = require('./routes/friend.js');
 const userRouter = require('./routes/user');
 const chatRoutes = require('./routes/chat'); // ✅ 新增聊天 API
-
+const app = express(); // 初始化 Express 应用
 
 
 // 🔌 连接数据库
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true, 
-  useUnifiedTopology: true 
-}).then(() => console.log('✅ MongoDB 连接成功'))
-.catch(err => console.error('❌ 数据库连接失败:', err));
-
+connectDB();
 
 
 // 1. 检查和创建 uploads 目录
@@ -98,10 +92,6 @@ app.get('/', (req, res) => {
 
 // 启动服务器
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🚀 API 服务器运行在 http://localhost:${PORT}`);
 });
-
-// 初始化 WebSocket
-const { initWebSocket } = require('./socket');
-initWebSocket(server);
