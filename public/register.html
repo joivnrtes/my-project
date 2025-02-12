@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册新账号</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">注册新账号</div>
+    <div class="form-container">
+        <form id="register-form">
+            <div class="avatar-container">
+                <img id="avatar-preview" src="http://localhost:3000/default-avatar.png" alt="Default Avatar">
+                <div class="file-input">
+                    <label for="avatar-upload">上传头像</label>
+                    <input type="file" id="avatar-upload" name="avatar" accept="image/*">
+
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                <p class="error-message" id="username-error"></p>
+            </div>
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="text" id="email" name="email" placeholder="请输入邮箱" required>
+                <p class="error-message" id="email-error"></p>
+            </div>
+            <div class="form-group">
+              <label for="verification-code">验证码</label>
+              <div class="verification-code-container">
+                <input type="text" id="verification-code" name="verificationCode" placeholder="请输入验证码" required />
+                <button type="button" class="btn-secondary" id="send-code-btn">发送验证码</button>
+              </div>
+              <p class="error-message" id="verification-error"></p>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                <p class="error-message" id="password-error"></p>
+            </div>
+            <div class="form-group">
+                <label for="gender">性别</label>
+                <input type="string" id="gender" name="gender" placeholder="请输入您的性别">
+            </div>
+            <div class="form-group">
+                <label for="height">身高(cm)</label>
+                <input type="number" id="height" name="height" placeholder="请输入身高">
+            </div>
+            <div class="form-group">
+                <label for="arm-span">臂展(cm)</label>
+                <input type="number" id="arm-span" name="arm-span" placeholder="请输入臂展">
+            </div>
+            <div class="form-group">
+                <label for="difficulty-level">难度水平</label>
+                <select id="difficulty-level" name="difficulty-level">
+                    <option value="">请选择</option>
+                    <option value="5.3">5.3</option>
+                    <option value="5.4">5.4</option>
+                    <option value="5.5">5.5</option>
+                    <option value="5.6">5.6</option>
+                    <option value="5.7">5.7</option>
+                    <option value="5.8">5.8</option>
+                    <option value="5.9">5.9</option>
+                    <option value="5.10a">5.10a</option>
+                    <option value="5.10b">5.10b</option>
+                    <option value="5.10c">5.10c</option>
+                    <option value="5.10d">5.10d</option>
+                    <option value="5.11a">5.11a</option>
+                    <option value="5.11b">5.11b</option>
+                    <option value="5.11c">5.11c</option>
+                    <option value="5.11d">5.11d</option>
+                    <option value="5.12a">5.12a</option>
+                    <option value="5.12b">5.12b</option>
+                    <option value="5.12c">5.12c</option>
+                    <option value="5.12d">5.12d</option>
+                    <option value="5.13a">5.13a</option>
+                    <option value="5.13b">5.13b</option>
+                    <option value="5.13c">5.13c</option>
+                    <option value="5.13d">5.13d</option>
+                    <option value="5.14a">5.14a</option>
+                    <option value="5.14b">5.14b</option>
+                    <option value="5.14c">5.14c</option>
+                    <option value="5.14d">5.14d</option>
+                    <option value="v1">v1</option>
+                    <option value="v2">v2</option>
+                    <option value="v3">v3</option>
+                    <option value="v4">v4</option>
+                    <option value="v5">v5</option>
+                    <option value="v6">v6</option>
+                    <option value="v7">v7</option>
+                    <option value="v8">v8</option>
+                    <option value="v9">v9</option>
+                    <option value="v10">v10</option>
+                    <option value="v11">v11</option>
+                    <option value="v12">v12</option>
+                    <option value="v13">v13</option>
+                    <option value="v14">v14</option>
+                    <option value="v15">v15</option>
+                    <option value="v16">v16</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="climbing-duration">攀岩时长</label>
+                <select id="climbing-duration" name="climbing-duration">
+                    <option value="">请选择</option>
+                    
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="climbing-preference">攀岩偏好</label>
+                <select id="climbing-preference" name="climbing-preference">
+                    <option value="">请选择</option>
+                    <option value="绳索攀岩">绳索攀岩</option>
+                    <option value="抱石">抱石</option>
+                    <option value="速攀">速攀</option>
+                </select>
+            </div>
+            <button type="button" class="btn" id="register-btn">注册</button>
+        </form>
+    </div>
+
+    <script src="register.js"></script>
+
+
+</body>
+</html>

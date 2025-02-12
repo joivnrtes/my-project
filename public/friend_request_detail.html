@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>好友请求详情</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      padding: 20px;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 5px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 10px;
+      display: block;
+    }
+    .info p {
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    .btn-group {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn {
+      flex: 1;
+      padding: 10px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .btn-accept {
+      background-color: #5690d8;
+      color: white;
+    }
+    .btn-reject {
+      background-color: #ccc;
+      color: #333;
+    }
+    .back-btn {
+      margin-top: 20px;
+      padding: 8px 12px;
+      font-size: 14px;
+      background-color: #eee;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>好友请求详情</h2>
+    <img id="avatar" class="avatar" src="http://localhost:3000/default-avatar.png" alt="头像">
+    <div class="info">
+      <p id="username">用户名: </p>
+      <p id="gender">性别: </p>
+      <p id="height">身高(cm): </p>
+      <p id="armspan">臂展(cm): </p>
+      <p id="difficultylevel">难度水平: </p>
+      <p id="climbingduration">攀岩时长: </p>
+      <p id="climbingpreference">攀岩偏好: </p>
+      <p id="days">注册天数: </p>
+      <p id="beta">分享 Beta: </p>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-accept" id="btn-accept">同意</button>
+      <button class="btn btn-reject" id="btn-reject">拒绝</button>
+    </div>
+    <button class="back-btn" id="btn-back">返回主页</button>
+  </div>
+
+  <!-- 引入 utils.js，其中包含 fetchWithAuth -->
+  <script src="utils.js"></script>
+  <script src="friend_request_detail.js"></script>
+</body>
+</html>

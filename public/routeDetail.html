@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- 移动端适配 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>线路详情</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .header {
+      background-color: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .btn-back {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-back:hover {
+      color: #ddd;
+    }
+
+    .main {
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 20px;
+    }
+
+    /* 路线容器 */
+    .route-container {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .route-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 0;
+    }
+    .route-meta {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    .route-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .btn-like-route {
+      background: none;
+      border: none;
+      color: #f04e30;
+      cursor: pointer;
+    }
+    .like-count {
+      font-size: 14px;
+      color: #555;
+    }
+    .route-description {
+      font-size: 14px;
+      color: #555;
+      white-space: pre-wrap; /* 保留换行 */
+      margin-bottom: 10px;
+    }
+    /* 路线视频容器 */
+    .video-container {
+      margin-top: 10px;
+    }
+    video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    /* 删除路线按钮（仅作者可见） */
+    .btn-delete-route {
+      background-color: #bbb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 5px;
+      display: none; /* 默认隐藏，通过JS动态显示 */
+    }
+    .btn-delete-route:hover {
+      background-color: #999;
+    }
+
+    /* 评论区 */
+    .comment-section {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .comment-section h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .comment-item {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+      position: relative;
+    }
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+    .comment-meta {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+    .comment-content {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 5px;
+      white-space: pre-wrap; /* 保留换行 */
+    }
+    .comment-video {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+    /* 删除评论按钮 */
+    .btn-delete-comment {
+      position: absolute;
+      top: 10px;
+      right: 0;
+      background-color: #bbb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-delete-comment:hover {
+      background-color: #999;
+    }
+
+    /* 评论表单 */
+    .comment-form {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .comment-form textarea {
+      width: 100%;
+      min-height: 60px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: vertical;
+      padding: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .comment-form input[type="file"] {
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 5px;
+    }
+    .btn-submit-comment {
+      background-color: #5690d8;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+    .btn-submit-comment:hover {
+      background-color: #4577b5;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="btn-back" id="btn-back">← 返回</button>
+    线路详情
+  </div>
+
+  <div class="main">
+    <div class="route-container" id="route-container">
+      <!-- 删除路线按钮（仅作者可见） -->
+      <button class="btn-delete-route" id="btn-delete-route">删除路线</button>
+
+      <div class="route-header">
+        <h2 class="route-title" id="route-title">路线名称</h2>
+      </div>
+      <p class="route-meta" id="route-meta">难度/作者/发布时间</p>
+      <div class="route-actions">
+        <button class="btn-like-route" id="btn-like-route">👍</button>
+        <span class="like-count" id="route-like">0赞</span>
+      </div>
+      <div class="route-description" id="route-description"></div>
+
+      <div class="video-container" id="route-video-container" style="display:none;">
+        <video id="route-video" controls></video>
+      </div>
+    </div>
+
+    <!-- 评论区 -->
+    <div class="comment-section">
+      <h3>评论区</h3>
+      <div id="comment-list"></div>
+
+      <!-- 添加评论表单 -->
+      <div class="comment-form">
+        <textarea id="cmt-text" rows="3" placeholder="写点什么..."></textarea>
+        <input type="file" id="cmt-video-file" accept="video/*"/>
+        <button class="btn-submit-comment" id="btn-submit-comment">发表评论</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="utils.js"></script>
+  <script src="routeDetail.js">
+
+  </script>
+</body>
+</html>

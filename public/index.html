@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- 针对iPhone的初始视口配置，禁止用户缩放以获得类似原生App的体验 -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <!-- iOS 支持 -->
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="山羊 GOAT">
+    <!-- 添加 PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+  <title>山羊 GOAT - 主页面</title>
+  <style>
+    /* =============== 全局基础样式 =============== */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box; 
+    }
+
+    /* 头部 */
+    .header {
+      background-color: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 内容区和底部导航的布局 */
+    .main {
+      flex: 1; 
+      overflow-y: auto; /* 内容区可滚动 */
+      padding: 10px;
+      /* 让底部导航不会覆盖内容 */
+      margin-bottom: 58px; 
+    }
+
+    /* =============== 底部导航条 =============== */
+    .tab-bar {
+      position: fixed; /* 固定定位 */
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      display: flex;
+      border-top: 1px solid #ddd;
+      background-color: #fff;
+      z-index: 999; /* 确保在最上层 */
+    }
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 12px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .tab-item.active {
+      color: #5690d8; 
+      font-weight: 600;
+    }
+    .tab-item i {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+
+    /* =============== 各个Tab对应的内容容器 =============== */
+    .tab-content {
+      display: none; /* 默认隐藏，激活时显示 */
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ============ 个人中心Tab ============ */
+    /* 1) 好友列表 & 个人信息视图 */
+    #friend-list-container {
+      /* 默认显示 */
+    }
+    /* 2) 聊天视图 */
+    #chat-container {
+      display: none; /* 切换后显示 */
+      height: calc(100vh - 58px - 60px); /* 预留头部和底部导航的高度，根据需要可微调 */
+    }
+
+    /* 个人资料卡 */
+    .profile-container {
+      text-align: center;
+    }
+    .profile-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      text-align: left;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 0 auto 20px auto;
+    }
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background-color: #ddd;
+      display: block;
+      object-fit: cover; 
+    }
+    .profile-info {
+      margin-top: 15px;
+    }
+    .profile-info h2 {
+      margin: 10px 0;
+      font-size: 20px;
+      color: #333;
+    }
+    .profile-info p {
+      margin: 5px 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .stats-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .stat h3 {
+      margin: 0;
+      font-size: 20px;
+      color: #f04e30;
+    }
+    .stat p {
+      margin: 5px 0 0;
+      font-size: 14px;
+      color: #666;
+    }
+    .btn-edit {
+      background-color: #f04e30;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .btn-edit:hover {
+      background-color: #d13e27;
+    }
+    .btn-logout {
+      background-color: #bbb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      margin: 0 0 20px 0; /* 示例: 给底部留点间距 */
+    }
+    .btn-logout:hover {
+      background-color: #999;
+    }
+
+    /* 好友列表 */
+    .friend-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .friend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+    .friend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .friend-item button {
+      background-color: #5690d8;
+      color: #fff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 5px;
+    }
+    .friend-item button:hover {
+      background-color: #4577b5;
+    }
+
+    /* ============ 聊天界面 ============ */
+    .chat-header {
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .back-btn {
+      font-size: 18px;
+      color: #5690d8;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .chat-title {
+      flex-grow: 1; /* 让标题占满中间空间 */
+      text-align: center;
+      font-weight: bold;
+    }
+    .delete-chat-btn {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+    .chat-messages {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      overflow-y: auto;
+      background: #fafafa;
+      height: calc(100% - 100px);
+    }
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-right: 5px;
+      font-size: 14px;
+    }
+    .chat-input button {
+      background: #5690d8;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .chat-input button:hover {
+      background: #4577b5;
+    }
+    .chat-bubble {
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 18px;
+      max-width: 70%;
+      line-height: 1.4;
+      font-size: 14px;
+      position: relative;
+      word-wrap: break-word;
+    }
+    .me {
+      align-self: flex-end;
+      background-color: #cce5ff;
+      color: #333;
+      margin-right: 10px;
+    }
+    .me::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      top: 12px;
+      border-width: 6px 0 6px 6px;
+      border-style: solid;
+      border-color: transparent transparent transparent #cce5ff;
+    }
+    .friend {
+      align-self: flex-start;
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ddd;
+      margin-left: 10px;
+    }
+    .friend::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 12px;
+      border-width: 6px 6px 6px 0;
+      border-style: solid;
+      border-color: transparent #fff transparent transparent;
+    }
+
+    /* ============ 线路分享Tab、野攀社区Tab、学习交流Tab 的CSS类似 ============ */
+    .search-bar {
+      margin: 10px 0;
+      display: flex;
+      justify-content: center;
+    }
+    .search-bar input {
+      width: 80%;
+      max-width: 400px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .community-container {
+      padding: 10px 0;
+    }
+    .post {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .post-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .post-title:hover {
+      color: #f04e30;
+    }
+    .post-date {
+      font-size: 12px;
+      color: #999;
+    }
+    .post-content {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    .post-actions {
+      display: flex;
+      align-items: center;
+    }
+    .btn-like {
+      display: none !important;
+    }
+    .btn-like:hover {
+      color: #d13e27;
+    }
+    .like-count {
+      margin-right: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* ============ 编辑资料弹窗 ============ */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none; /* 默认不显示 */
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 18px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .btn-modal {
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-save {
+      background-color: #5690d8;
+      color: #fff;
+      margin-right: 10px;
+    }
+    .btn-cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+    .btn-save:hover {
+      background-color: #4577b5;
+    }
+    .btn-cancel:hover {
+      background-color: #bbb;
+    }
+    .error-message {
+      color: red;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    /* ============ 好友资料弹窗 ============ */
+    #friend-info-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 3000;
+      display: none; /* 默认不显示 */
+      justify-content: center;
+      align-items: center;
+    }
+    #friend-info-content {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .friend-info-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background-color: #ddd;
+      display: block;
+      object-fit: cover;
+    }
+    #friend-info-content h4 {
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #friend-info-content p {
+      margin: 5px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .btn-close {
+      background-color: #aaa;
+      color: #fff;
+      margin-top: 15px;
+    }
+    .btn-close:hover {
+      background-color: #888;
+    }
+
+    /* ============ “加好友”搜索框 ============ */
+    .add-friend-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .add-friend-container input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-right: 5px;
+      font-size: 14px;
+    }
+    .add-friend-container button {
+      background-color: #f04e30;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .add-friend-container button:hover {
+      background-color: #d13e27;
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部 -->
+  <div class="header">山羊 GOAT</div>
+
+  <!-- 主内容区 -->
+  <div class="main">
+    <!-- 个人中心Tab (默认激活) -->
+    <div class="tab-content active" id="tab-personal">
+      <!-- 好友列表及个人资料 -->
+      <div id="friend-list-container">
+        <h2>个人中心</h2>
+        <!-- “退出登录”按钮 -->
+        <button class="btn-logout" id="logoutBtn">退出登录</button>
+
+        <!-- 个人资料卡 -->
+        <div class="profile-container">
+          <div class="profile-card">
+            <!-- 用户头像 -->
+            <img class="profile-avatar" id="profile-avatar" src="http://localhost:3000/default-avatar.png" alt="Avatar">
+
+            <div class="profile-info">
+                <h2 id="profile-username">用户名</h2>
+                <p id="profile-gender">性别: 女</p>
+                <p id="profile-height">身高(cm): 170</p>
+                <p id="profile-armspan">臂展(cm): 165</p>
+                <p id="profile-difficultylevel">难度水平: 5.10a</p>
+                <p id="profile-climbingduration">攀岩时长: 半年</p>
+                <p id="profile-climbingpreference">攀岩偏好: 绳索攀岩</p>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat">
+                    <h3 id="profile-days">120</h3>
+                    <p>注册天数</p>
+                </div>
+                <div class="stat">
+                    <h3 id="profile-beta">15</h3>
+                    <p>分享</p>
+                </div>
+            </div>
+            <button class="btn-edit" id="openEditProfileBtn">编辑个人资料</button>
+          </div>
+        </div>
+
+        <h3>好友请求</h3>
+        <ul id="friend-request-list"></ul>
+        <h3>我的好友</h3>
+        <!-- 加好友功能 -->
+        <div class="add-friend-container">
+          <input type="text" id="search-friend-input" placeholder="输入用户名">
+          <button class="requestAddFriendBtn" id="requestAddFriendBtn">加好友</button>
+        </div>
+        <!-- 好友列表 -->
+        <ul class="friend-list" id="friend-list"></ul>
+
+
+      </div>
+
+      <!-- 聊天界面（默认隐藏） -->
+      <div id="chat-container">
+        <div class="chat-header">
+          <button class="back-btn" id="returnToFriendListBtn">←</button>
+          <span class="chat-title" id="chat-title">与 ??? 的聊天</span>
+          <button class="deleteChatHistoryBtn" id="deleteChatHistoryBtn">删除聊天记录</button>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="输入消息...">
+          <button class="sendMessageBtn"id="sendMessageBtn">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 线路分享Tab -->
+    <div class="tab-content" id="tab-share">
+      <h2>线路分享</h2>
+      <!-- 城市选择下拉框 -->
+      <div class="search-bar">
+        <label for="select-province">省份：</label>
+        <select id="select-province">
+        <option value="">-- 请选择省份 --</option>
+           </select>
+
+        <label for="select-city">城市：</label>
+        <select id="select-city">
+         <option value="">-- 请选择城市 --</option>
+           </select>
+      </div>
+  
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="搜索岩馆..." />
+      </div>
+  
+      <div class="community-container" id="share-list">
+        <!-- 动态渲染 -->
+      </div>
+    </div>
+
+    <!-- 野攀社区Tab -->
+    <div class="tab-content" id="tab-community">
+      <h2>野攀社区</h2>
+      <div class="search-bar">
+        <input type="text" id="search-input-community" placeholder="搜索帖子...">
+      </div>
+      <!-- 用一个按钮跳转到发帖页面 -->
+      <div style="margin: 10px 0;">
+        <button class="goToCommunityPostPageBtn" id="goToCommunityPostPageBtn">去发帖</button>
+      </div>
+
+      <!-- 新增：帖子列表容器 -->
+      <div id="community-post-list"></div>
+    </div>
+
+    <!-- 学习交流Tab -->
+    <div class="tab-content" id="tab-study">
+      <h2>学习交流</h2>
+      <div class="search-bar">
+        <input type="text" id="search-input-study" placeholder="搜索帖子...">
+      </div>
+      
+      <!-- 用一个按钮跳转到发帖页面 -->
+      <div style="margin: 10px 0;">
+        <button class="goToStudyPostPageBtn" id="goToStudyPostPageBtn">去发帖</button>
+      </div>
+
+      <!-- 新增：帖子列表容器 -->
+      <div id="study-post-list"></div>
+    </div>
+
+  <!-- 底部导航 -->
+  <div class="tab-bar" id="tab-bar">
+    <div class="tab-item active" data-target="tab-personal">
+      <i>👤</i>
+      <span>个人中心</span>
+    </div>
+    <div class="tab-item" data-target="tab-share">
+      <i>📍</i>
+      <span>线路分享</span>
+    </div>
+    <div class="tab-item" data-target="tab-community">
+      <i>🌄</i>
+      <span>野攀社区</span>
+    </div>
+    <div class="tab-item" data-target="tab-study">
+      <i>📚</i>
+      <span>学习交流</span>
+    </div>
+  </div>
+
+  <!-- ============== 编辑资料弹窗 ============== -->
+  <div class="modal-overlay" id="edit-profile-overlay">
+    <div class="modal-content">
+      <h3>编辑个人资料</h3>
+      <div class="form-group">
+        <label for="edit-username">用户名</label>
+        <input type="text" id="edit-username" />
+        <p class="error-message" id="error-username"></p>
+      </div>
+      <div class="form-group">
+        <label for="edit-avatar">头像</label>
+        <input type="file" id="edit-avatar" />
+      </div>
+      <div class="form-group">
+        <label for="edit-gender">性别</label>
+        <select id="edit-gender">
+          <option value="女">女</option>
+          <option value="男">男</option>
+          <option value="不想透露">不想透露</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-height">身高(cm)</label>
+        <input type="number" id="edit-height" min="0" max="300"/>
+      </div>
+      <div class="form-group">
+        <label for="edit-armspan">臂展(cm)</label>
+        <input type="number" id="edit-armspan" min="0" max="350"/>
+      </div>
+      <div class="form-group">
+        <label for="edit-difficultylevel">难度水平</label>
+        <select id="edit-difficultylevel">
+          <!-- 常见攀岩等级选项 -->
+          <option value="5.3">5.3</option>
+          <option value="5.4">5.4</option>
+          <option value="5.5">5.5</option>
+          <option value="5.6">5.6</option>
+          <option value="5.7">5.7</option>
+          <option value="5.8">5.8</option>
+          <option value="5.9">5.9</option>
+          <option value="5.10a">5.10a</option>
+          <option value="5.10b">5.10b</option>
+          <option value="5.10c">5.10c</option>
+          <option value="5.10d">5.10d</option>
+          <option value="5.11a">5.11a</option>
+          <option value="5.11b">5.11b</option>
+          <option value="5.11c">5.11c</option>
+          <option value="5.11d">5.11d</option>
+          <option value="5.12a">5.12a</option>
+          <option value="5.12b">5.12b</option>
+          <option value="5.12c">5.12c</option>
+          <option value="5.12d">5.12d</option>
+          <option value="5.13a">5.13a</option>
+          <option value="5.13b">5.13b</option>
+          <option value="5.13c">5.13c</option>
+          <option value="5.13d">5.13d</option>
+          <option value="5.14a">5.14a</option>
+          <option value="5.14b">5.14b</option>
+          <option value="5.14c">5.14c</option>
+          <option value="5.14d">5.14d</option>
+          <option value="v1">v1</option>
+          <option value="v2">v2</option>
+          <option value="v3">v3</option>
+          <option value="v4">v4</option>
+          <option value="v5">v5</option>
+          <option value="v6">v6</option>
+          <option value="v7">v7</option>
+          <option value="v8">v8</option>
+          <option value="v9">v9</option>
+          <option value="v10">v10</option>
+          <option value="v11">v11</option>
+          <option value="v12">v12</option>
+          <option value="v13">v13</option>
+          <option value="v14">v14</option>
+          <option value="v15">v15</option>
+          <option value="v16">v16</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-climbingduration">攀岩时长 (月份)</label>
+        <select id="edit-climbingduration">
+          <!-- 0~1200个月(100年) -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-climbingpreference">攀岩偏好</label>
+        <select id="edit-climbingpreference" multiple>
+          <option value="绳索攀岩">绳索攀岩</option>
+          <option value="抱石">抱石</option>
+          <option value="速攀">速攀</option>
+        </select>
+        <p class="error-message" id="error-climbingpreference"></p>
+      </div>
+      <button class="btn-modal btn-save" id="saveProfileBtn">保存</button>
+      <button class="btn-modal btn-cancel" id="closeEditProfileBtn">取消</button>
+    </div>
+  </div>
+
+  <!-- ============== 好友资料弹窗 ============== -->
+  <div class="modal-overlay" id="friend-info-overlay">
+    <div id="friend-info-content">
+      <img src="http://localhost:3000/default-avatar.png" class="friend-info-avatar" id="friend-info-avatar" alt="FriendAvatar">
+      <h4 id="friend-info-username">好友用户名</h4>
+      <p id="friend-info-gender"></p>
+      <p id="friend-info-height"></p>
+      <p id="friend-info-armspan"></p>
+      <p id="friend-info-difficultylevel"></p>
+      <p id="friend-info-climbingduration"></p>
+      <p id="friend-info-climbingpreference"></p>
+      <p id="friend-info-days"></p>
+      <p id="friend-info-beta"></p>
+      <button class="btn-close" id="closeFriendInfoBtn">关闭</button>
+    </div>
+  </div>
+
+  
+  <script src="utils.js"></script>
+  <script src="chatSocket.js"></script>
+  <script src="index.js"></script>
+
+</body>
+</html>

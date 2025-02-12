@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>好友详细信息</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    .info p {
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    .btn-group {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-add {
+      background-color: #5690d8;
+      color: #fff;
+    }
+    .btn-cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="username">用户名</h2>
+    <img id="avatar" class="avatar" src="http://localhost:3000/default-avatar.png" alt="用户头像">
+    <div class="info">
+      <p id="height">身高(cm): </p>
+      <p id="armspan">臂展(cm): </p>
+      <p id="difficultylevel">难度水平: </p>
+      <p id="climbingduration">攀岩时长: </p>
+      <p id="climbingpreference">攀岩偏好: </p>
+      <p id="days">注册天数: </p>
+      <p id="beta">分享 Beta: </p>
+    </div>
+    <div class="btn-group">
+      <button class="btn-add" id="btn-send-friend-request">申请加好友</button>
+      <button class="btn-cancel" id="btn-cancel">取消</button>
+    </div>
+  </div>
+
+  <!-- 引入 utils.js，其中包含 fetchWithAuth 方法 -->
+  <script src="utils.js"></script>
+
+  <script src="friend_detail.js"></script>
+</body>
+</html>

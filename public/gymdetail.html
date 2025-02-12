@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- 针对iPhone的初始视口配置，禁止用户缩放以获得类似原生App的体验 -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>详情</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      box-sizing: border-box;
+    }
+    .header {
+      background-color: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      position: relative; /* 如果想在左侧放返回按钮，可相对定位 */
+    }
+    /* “返回主界面”按钮 */
+    .back-btn {
+      position: absolute; 
+      left: 10px; 
+      top: 50%;
+      transform: translateY(-50%); /* 垂直居中对齐 */
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .back-btn:hover {
+      color: #ddd;
+    }
+
+    .container {
+      padding: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      min-height: calc(100vh - 20px);
+    }
+    .gym-info {
+      margin-bottom: 12px;
+    }
+    .gym-info h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #333;
+    }
+    .gym-basic {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .btn-add-route {
+      display: inline-block;
+      padding: 8px 12px;
+      background: #f04e30;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .btn-add-route:hover {
+      background: #d13e27;
+    }
+
+    /* 线路列表样式 */
+    .route-list {
+      list-style: none;
+      margin: 0; padding: 0;
+    }
+    .route-item {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .route-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #333;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .route-title:hover {
+      color: #f04e30;
+    }
+    .route-creator {
+      font-size: 13px;
+      color: #999;
+    }
+    .route-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-like, .btn-comment {
+      background: transparent;
+      border: none;
+      color: #f04e30;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-like:hover, .btn-comment:hover {
+      color: #d13e27;
+    }
+    .like-count, .comment-count {
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <!-- 在header中添加“返回主界面”按钮(链接)，带 ?tab=share 参数 -->
+  <div class="header">
+    <button class="back-btn" id="back-btn">← 返回</button>
+    <span id="gym-name-header"></span>
+  </div>
+
+  <div class="container">
+    <!-- 岩馆基本信息 -->
+    <div class="gym-info">
+      <h2 id="gym-name"></h2>
+      <p class="gym-basic" id="gym-province"></p>
+      <p class="gym-basic" id="gym-city"></p>
+      <p class="gym-basic" id="gym-location"></p>
+    </div>
+
+    <!-- 跳转到添加线路的页面 -->
+    <a id="add-route-link" class="btn-add-route">➕ 添加新线路</a>
+
+    <!-- 线路列表 -->
+    <ul class="route-list" id="route-list"></ul>
+  </div>
+
+  <script src="utils.js"></script>
+  <script src="gymdetail.js"></script>
+</body>
+</html>
