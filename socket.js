@@ -1,89 +1,81 @@
-const WebSocket = require('ws');
-const Chat = require('./models/Chat'); // 确保正确引入 Chat 模型
+require('dotenv').config();
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const Chat = require('./models/Chat');
 const { verifyTokenAndGetUserId } = require('./utils/jwt');
+
+const app = express();
+const server = http.createServer(app);
+
+app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
+
+const io = new Server(server, {
+    cors: { origin: '*', methods: ['GET', 'POST'] }
+});
+
+// 连接 MongoDB（确保 WebSocket 服务器也能访问数据库）
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('✅ WebSocket 服务器连接 MongoDB 成功'))
+.catch(err => console.error('❌ MongoDB 连接失败:', err));
 
 const onlineUsers = new Map();
 
-/**
- * 发送消息到用户
- */
-function sendMessageToUser(userId, message) {
-  const recipientSocket = onlineUsers.get(userId);
-  if (recipientSocket) {
-    recipientSocket.send(JSON.stringify(message));
-  }
-}
-
-/**
- * 初始化 WebSocket 服务器
- */
-function initWebSocket(server) {
-  const wss = new WebSocket.Server({ server });
-
-  wss.on('connection', async (ws, request) => {
-    const url = new URL(request.url, `http://${request.headers.host}`);
-    let token = url.searchParams.get('token');
-
+// 处理 WebSocket 连接
+io.on('connection', async (socket) => {
+    const token = socket.handshake.query.token;
     if (!token) {
-      console.error('❌ WebSocket 连接失败：Token 为空');
-      ws.close(4001, 'Invalid token');
-      return;
-    }
-
-    // ✅ 处理 "Bearer " 前缀问题
-    if (token.startsWith('Bearer ')) {
-      token = token.slice(7).trim(); // 去掉 "Bearer " 前缀
+        console.error('❌ WebSocket 连接失败：Token 为空');
+        socket.disconnect();
+        return;
     }
 
     let userId;
     try {
-      userId = verifyTokenAndGetUserId(token);
-      if (!userId) {
-        console.error('❌ WebSocket 连接失败：Token 无效');
-        ws.close(4001, 'Invalid token');
-        return;
-      }
+        userId = verifyTokenAndGetUserId(token);
+        if (!userId) {
+            console.error('❌ WebSocket 连接失败：Token 无效');
+            socket.disconnect();
+            return;
+        }
     } catch (err) {
-      console.error('❌ WebSocket 解析 Token 失败:', err.message);
-      ws.close(4001, 'Invalid token');
-      return;
+        console.error('❌ WebSocket 解析 Token 失败:', err.message);
+        socket.disconnect();
+        return;
     }
 
-    // ✅ 存储用户 WebSocket 连接
-    onlineUsers.set(userId, ws);
+    onlineUsers.set(userId, socket);
     console.log(`✅ WebSocket: 用户 ${userId} 连接成功`);
 
-    ws.on('message', async (messageStr) => {
-      try {
-        const data = JSON.parse(messageStr);
-    
-        if (data.type === 'chat') {
-          const { to, message } = data;
-          if (!to || !message) return;
-    
-          // ✅ 存入数据库
-          const chatMessage = new Chat({ from: userId, to, message });
-          await chatMessage.save();
-    
-          // ✅ 仅发送给目标用户（不推送给自己）
-          sendMessageToUser(to, { type: 'chat', from: userId, message });
-    
-          console.log(`📩 [WebSocket] 用户 ${userId} 发送消息: ${message} 给用户 ${to}`);
-        } else if (data.type === 'delete_chat') {
-          sendMessageToUser(data.to, { type: 'delete_chat', from: userId });
+    socket.on('message', async (data) => {
+        try {
+            const { to, message } = data;
+            if (!to || !message) return;
+
+            const chatMessage = new Chat({ from: userId, to, message });
+            await chatMessage.save();
+
+            if (onlineUsers.has(to)) {
+                onlineUsers.get(to).emit('message', { from: userId, message });
+            }
+            console.log(`📩 [WebSocket] 用户 ${userId} 发送消息: ${message} 给用户 ${to}`);
+        } catch (err) {
+            console.error('❌ WebSocket 消息处理错误:', err);
         }
-      } catch (err) {
-        console.error('WebSocket 消息解析错误:', err);
-      }
     });
-    
 
-    ws.on('close', () => {
-      console.log(`🔌 用户 ${userId} 断开连接`);
-      onlineUsers.delete(userId);
+    socket.on('disconnect', () => {
+        console.log(`🔴 用户 ${userId} 断开连接`);
+        onlineUsers.delete(userId);
     });
-  });
-}
+});
 
-module.exports = { initWebSocket, sendMessageToUser };
-
+// 启动 WebSocket 服务器
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+    console.log(`🚀 WebSocket 服务器运行在 http://localhost:${PORT}`);
+});
