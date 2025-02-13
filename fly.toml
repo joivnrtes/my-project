@@ -1,0 +1,22 @@
+# fly.toml app configuration file generated for my-project-autumn-firefly-9741 on 2025-02-13T11:01:53-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'my-project-autumn-firefly-9741'
+primary_region = 'yyz'
+
+[build]
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

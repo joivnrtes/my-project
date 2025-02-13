@@ -1,20 +1,23 @@
-// config/redisClient.js
 const { createClient } = require('redis');
 
 const redisClient = createClient({
-  // 可以配置连接参数，如 host, port, password 等。
-  // 默认连接本地 Redis
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL, // 读取环境变量
+  socket: {
+    tls: true, // Upstash 需要 TLS 加密
+  },
 });
 
 redisClient.on('error', (err) => {
-  console.error('Redis Client Error', err);
+  console.error('❌ Redis Client Error:', err);
 });
 
-// 建立连接（确保在应用启动时调用）
 (async () => {
-  await redisClient.connect();
-  console.log('Redis connected!');
+  try {
+    await redisClient.connect();
+    console.log('✅ Connected to Upstash Redis!');
+  } catch (error) {
+    console.error('❌ Redis connection failed:', error);
+  }
 })();
 
 module.exports = redisClient;

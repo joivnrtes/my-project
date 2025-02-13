@@ -17,11 +17,12 @@ const io = new Server(server, {
 });
 
 // 连接 MongoDB（确保 WebSocket 服务器也能访问数据库）
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('✅ WebSocket 服务器连接 MongoDB 成功'))
-.catch(err => console.error('❌ MongoDB 连接失败:', err));
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ WebSocket 服务器连接 MongoDB 成功'))
+    .catch(err => {
+        console.error('❌ MongoDB 连接失败:', err);
+        process.exit(1);  // 连接失败时终止进程，防止应用在没有数据库的情况下运行
+    });
 
 const onlineUsers = new Map();
 
@@ -77,5 +78,6 @@ io.on('connection', async (socket) => {
 // 启动 WebSocket 服务器
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-    console.log(`🚀 WebSocket 服务器运行在 http://localhost:${PORT}`);
+    console.log(`🚀 WebSocket 服务器运行在端口 ${PORT}`);
 });
+

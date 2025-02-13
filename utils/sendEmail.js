@@ -24,7 +24,7 @@ const sendEmail = async (options) => {
 
   // 设置邮件选项
   const mailOptions = {
-    from: `"My App" <${process.env.GMAIL_USER}>`, // 发件人信息
+    from: `"GOAT App" <${process.env.GMAIL_USER}>`, // 发件人信息
     to: options.email,       // 收件人邮箱地址
     subject: options.subject, // 邮件主题
     text: options.message,    // 邮件正文
