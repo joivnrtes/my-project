@@ -35,7 +35,7 @@ if (!fs.existsSync(uploadDir)) {
 // 中间件
 app.use(express.json()); // 解析 JSON 请求体
 app.use(cors({
-  origin: ['http://127.0.0.1:8080', 'http://localhost:8080', 'http://localhost:3000'], 
+  origin: ['http://127.0.0.1:8080', 'http://localhost:8080', 'http://localhost:3000', 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app',], 
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的 HTTP 方法
   allowedHeaders: ['Content-Type', 'Authorization'], // 允许的请求头
   credentials: true, // 是否允许发送跨域请求时携带 Cookies
@@ -44,10 +44,15 @@ app.use(cors({
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:3000 ws://localhost:3000; style-src 'self' 'unsafe-inline'; img-src 'self' http://localhost:3000 http://127.0.0.1:8080 data:;"
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "connect-src 'self' http://localhost:3000 ws://localhost:3000 https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app wss://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' http://localhost:3000 http://127.0.0.1:8080 data:;"
   );
   next();
 });
+
 
 
 
@@ -85,10 +90,6 @@ app.get('*', (req, res) => {
   });
 });
 
-// 根路由
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
 
 // 启动服务器
 const PORT = process.env.PORT || 3000;

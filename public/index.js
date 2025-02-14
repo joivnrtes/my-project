@@ -134,7 +134,7 @@ window.addEventListener("load", function () {
       // 检查 avatar 字段是否存在或有效
       const avatarUrl = userInfo.avatarUrl && userInfo.avatarUrl.trim() !== ''
     ? userInfo.avatarUrl
-    : 'http://localhost:3000/default-avatar.png';
+    : 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
 
         // 动态设置头像 URL，添加时间戳避免缓存
         document.getElementById('profile-avatar').src = `${avatarUrl}?timestamp=${new Date().getTime()}`;
@@ -242,7 +242,7 @@ function initProvinceCitySelects() {
   provinceSelect.innerHTML = '<option value="">-- 请选择省份 --</option>';
   citySelect.innerHTML = '<option value="">-- 请选择城市 --</option>';
 
-  fetch('http://localhost:3000/api/auth/all')
+  fetch('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/auth/all')
     .then(response => response.json())
     .then(data => {
       console.log("省市数据：", data);
@@ -286,7 +286,7 @@ function initProvinceCitySelects() {
 
     // ========== 一次性获取全部岩馆信息 ========== 
     function fetchAllGyms() {
-      fetch('http://localhost:3000/api/gym/all')
+      fetch('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/all')
         .then(response => response.json())
         .then(data => {
           gyms = data; // 拿到后端返回的全国岩馆数据
@@ -419,7 +419,7 @@ function initProvinceCitySelects() {
 
       // ========== 社区、学习贴子渲染 ========== 
       function renderCommunityPosts() {
-  fetchWithAuth('http://localhost:3000/api/community/posts')
+  fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/posts')
     .then(data => {
       if (!data.success) {
         alert("获取帖子失败: " + data.message);
@@ -507,7 +507,7 @@ function initProvinceCitySelects() {
 }
 
 function likeCommunityPost(postId, button) {
-  fetchWithAuth(`http://localhost:3000/api/community/post/${postId}/like`, {
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}/like`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userId: localStorage.getItem('userId') })
@@ -539,7 +539,7 @@ function toggleCommentSection(postId, wrapper) {
   commentSection.style.marginTop = "8px";
   commentSection.style.paddingTop = "8px";
 
-  fetchWithAuth(`http://localhost:3000/api/community/post/${postId}`)
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}`)
     .then(data => {
       if (!data.success) {
         alert("获取评论失败: " + data.message);
@@ -584,7 +584,7 @@ function postComment(postId, text, commentSection) {
     return;
   }
 
-  fetchWithAuth(`http://localhost:3000/api/community/post/${postId}/comment`, {
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}/comment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userId: localStorage.getItem('userId'), text: text.trim() })
@@ -608,7 +608,7 @@ function postComment(postId, text, commentSection) {
 
 function renderStudyPosts() {
   // 从后端获取所有学习帖
-  fetchWithAuth('http://localhost:3000/api/study/posts')
+  fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/study/posts')
     .then(data => {
       if (!data.success) {
         alert("获取学习贴失败: " + data.message);
@@ -693,7 +693,7 @@ function renderStudyPosts() {
 }
 
 function likeStudyPost(postId, btn) {
-  fetchWithAuth(`http://localhost:3000/api/study/post/${postId}/like`, {
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/study/post/${postId}/like`, {
     method: 'POST',
     headers: { "Content-Type": "application/json" }
   })
@@ -859,7 +859,7 @@ function toggleCommentSection(postId, tabType, wrapper){
     return;
   }
   // 使用 encodeURIComponent 以确保特殊字符正确传输
-  fetch(`http://localhost:3000/api/user/search?keyword=${encodeURIComponent(username)}`)
+  fetch(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/user/search?keyword=${encodeURIComponent(username)}`)
     .then(response => response.json())  // 先解析成 JSON
     .then(data => {
       console.log('搜索结果:', data);
@@ -880,7 +880,7 @@ function toggleCommentSection(postId, tabType, wrapper){
 
 // 加载当前用户收到的好友请求（待处理的）
 function loadFriendRequests() {
-  fetchWithAuth('http://localhost:3000/api/friend-request/received')
+  fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/friend-request/received')
     .then(result => {
       if (!result.success) {
         console.error('获取好友请求失败:', result.message);
@@ -904,7 +904,7 @@ function loadFriendRequests() {
         div.style.alignItems = 'center';
 
         const img = document.createElement('img');
-        img.src = req.from.avatarUrl || 'http://localhost:3000/default-avatar.png';
+        img.src = req.from.avatarUrl || 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
         img.alt = '头像';
         img.style.width = '40px';
         img.style.height = '40px';
@@ -960,7 +960,7 @@ if (!userId) {
         return;
     }
 
-  fetchWithAuth(`http://localhost:3000/api/user/${userId}/friends`)
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/user/${userId}/friends`)
     .then(result => {
       if (!result.success) {
         console.error('获取好友列表失败:', result.message);
@@ -986,7 +986,7 @@ if (!userId) {
 
           // 创建头像 img
           const img = document.createElement('img');
-          img.src = friend.avatarUrl || 'http://localhost:3000/default-avatar.png';
+          img.src = friend.avatarUrl || 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
           img.alt = '头像';
           img.style.width = '40px';
           img.style.height = '40px';
@@ -1048,7 +1048,7 @@ if (!userId) {
 
 
     function handleFriendRequest(requestId, action) {
-  fetchWithAuth(`http://localhost:3000/api/friend-request/${requestId}/handle`, {
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/friend-request/${requestId}/handle`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action })  // 'accept'或'reject'
@@ -1071,7 +1071,7 @@ if (!userId) {
 
 function openFriendInfo(event, targetUserId) {
   event.stopPropagation();
-  fetchWithAuth(`http://localhost:3000/api/user/${targetUserId}`)
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/user/${targetUserId}`)
     .then(result => {
       if (!result.success || !result.data) {
         alert('用户信息获取失败: ' + result.message);
@@ -1079,7 +1079,7 @@ function openFriendInfo(event, targetUserId) {
       }
       // 拿到对方信息再渲染
       const friendData = result.data;
-      document.getElementById('friend-info-avatar').src = friendData.avatarUrl || 'http://localhost:3000/default-avatar.png';
+      document.getElementById('friend-info-avatar').src = friendData.avatarUrl || 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
       document.getElementById('friend-info-username').textContent = friendData.username;
       document.getElementById('friend-info-gender').textContent = `性别: ${friendData.gender || '无'}`;
       document.getElementById('friend-info-height').textContent = `身高(cm): ${friendData.height || 0}`;
@@ -1106,7 +1106,7 @@ function openFriendInfo(event, targetUserId) {
   event.stopPropagation();
   if (!confirm(`确定删除该好友?`)) return;
 
-  fetchWithAuth(`http://localhost:3000/api/friend-request/${friendId}`, {
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/friend-request/${friendId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
@@ -1168,7 +1168,7 @@ function getCurrentUserId() {
       const currentUserId = getCurrentUserId();
     
       // ✅ 加载历史聊天记录，确保不重复渲染
-      fetchWithAuth(`http://localhost:3000/api/chat/history?friendId=${friendId}`)
+      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/chat/history?friendId=${friendId}`)
         .then(data => {
           if (!data.success) {
             alert('获取聊天记录失败');
@@ -1241,7 +1241,7 @@ function getCurrentUserId() {
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 
   // 发送消息到服务器
-  fetchWithAuth('http://localhost:3000/api/chat/send', {
+  fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/chat/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to: currentChatUser, message })
@@ -1260,7 +1260,7 @@ function getCurrentUserId() {
 function deleteChatHistory() {
   if (!confirm('确定删除该好友的所有聊天记录？')) return;
 
-  fetchWithAuth(`http://localhost:3000/api/chat/history?friendId=${currentChatUser}`, {
+  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/chat/history?friendId=${currentChatUser}`, {
     method: 'DELETE'
   })
     .then(data => {
@@ -1306,7 +1306,7 @@ async function refreshBeta() {
   if (!storedUser || !storedUser.id) return;
   try {
     // 假设你的后端接口为 GET /api/user/:userId
-    const response = await fetchWithAuth(`http://localhost:3000/api/user/${storedUser.id}`);
+    const response = await fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/user/${storedUser.id}`);
     if (response.success) {
       const updatedUser = response.data;
       // 更新 localStorage 中的用户数据
@@ -1431,7 +1431,7 @@ async function refreshBeta() {
       };
       // 定义一个函数，调用后端更新资料接口
       function updateProfile() {
-      fetchWithAuth('http://localhost:3000/api/auth/update-profile', {
+      fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/auth/update-profile', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1482,7 +1482,7 @@ if (avatarFile.size > maxSize) {
       alert('头像上传超时，请稍后重试。');
     }, 10000);
 
-    fetch('http://localhost:3000/api/auth/upload-avatar', {
+    fetch('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/auth/upload-avatar', {
       method: 'POST',
       body: formData,
       signal: controller.signal,

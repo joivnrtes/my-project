@@ -9,7 +9,7 @@
   }
 
   function fetchGymDetail(id) {
-    fetch(`http://localhost:3000/api/gym/${id}`)
+    fetch(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${id}`)
       .then(response => {
         if (!response.ok) {
           throw new Error('获取岩馆详情失败');

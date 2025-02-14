@@ -1,69 +1,76 @@
-let ws = null;
+import { io } from "socket.io-client";
+
+let socket = null;
 let reconnectTimer = null;
 
 function getCurrentUserId() {
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-  return (userInfo._id || userInfo.id).toString();
+  const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+  return userInfo ? (userInfo._id || userInfo.id).toString() : null;
 }
 
 function connectWS() {
-  let token = localStorage.getItem('accessToken');
+  let token = localStorage.getItem("accessToken");
   if (!token) {
-    alert('请先登录！');
-    window.location.href = 'login.html';
+    alert("请先登录！");
+    window.location.href = "login.html";
     return;
   }
 
-  // ✅ 保持 "Bearer " 前缀，以保证和 fetchWithAuth() 一致
+  // ✅ 确保 Bearer 认证
   token = `Bearer ${token}`;
 
-    // 如果已有 ws 连接，先关闭
-    if (ws) {
-      ws.onmessage = null; // ✅ 清除旧的 onmessage 监听器
-      ws.onclose = null;
-      ws.onerror = null;
-      ws.close();
-    }
+  // 断开已有连接
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
 
-  ws = new WebSocket(`ws://localhost:3000?token=${encodeURIComponent(token)}`);
+  // ✅ 改为 Render 服务器地址
+  const SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "wss://websocket-server-o0o0.onrender.com";
 
-  ws.onopen = () => {
-    console.log('[WS] 连接成功');
-  };
+  socket = io(SERVER_URL, {
+    transports: ["websocket"],
+    query: { token },
+  });
 
-  ws.onmessage = (event) => {
-    console.log('[WS] 收到消息:', event.data);
-    const data = JSON.parse(event.data);
+  socket.on("connect", () => {
+    console.log("[WS] 连接成功:", socket.id);
+  });
+
+  socket.on("message", (data) => {
+    console.log("[WS] 收到消息:", data);
     const userId = getCurrentUserId();
-    if (data.type === 'chat' && data.from !== userId && data.from === currentChatUser) {
-      // 显示聊天消息
-      const chatMessagesEl = document.getElementById('chat-messages');
-// ✅ 过滤重复消息（防止 WebSocket 重连导致的重复消息）
-const existingMessages = Array.from(chatMessagesEl.children).map(msg => msg.textContent.trim());
-if (!existingMessages.includes(data.message.trim())) {
-  const msgBubble = createBubble(data.message, 'friend');
-  chatMessagesEl.appendChild(msgBubble);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-}
-}
-};
+    if (data.from !== userId && data.from === currentChatUser) {
+      const chatMessagesEl = document.getElementById("chat-messages");
 
-  ws.onclose = (event) => {
-    console.warn(`[WS] 连接关闭 (代码: ${event.code}, 原因: ${event.reason})`);
-    ws = null;
+      // ✅ 过滤重复消息（防止 WebSocket 重连导致的重复消息）
+      const existingMessages = Array.from(chatMessagesEl.children).map((msg) =>
+        msg.textContent.trim()
+      );
+      if (!existingMessages.includes(data.message.trim())) {
+        const msgBubble = createBubble(data.message, "friend");
+        chatMessagesEl.appendChild(msgBubble);
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+      }
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.warn("[WS] 连接断开");
+    socket = null;
     reconnectTimer = setTimeout(connectWS, 5000);
-  };
+  });
 
-  ws.onerror = (err) => {
-    console.error('[WS] WebSocket 错误:', err);
-  };
+  socket.on("connect_error", (err) => {
+    console.error("[WS] WebSocket 连接错误:", err);
+  });
 }
 
 function sendWSMessage(msgObj) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(msgObj));
+  if (socket && socket.connected) {
+    socket.emit("message", msgObj);
   } else {
-    console.log('[WS] 当前未连接，无法发送消息');
+    console.log("[WS] 当前未连接，无法发送消息");
   }
 }
 

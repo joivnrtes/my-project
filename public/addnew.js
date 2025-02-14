@@ -38,7 +38,7 @@
       formData.append('videoFile', file);
 
       // 这里用 fetchWithAuth，如果需要鉴权就要带 token
-      const uploadData = await fetchWithAuth('http://localhost:3000/api/upload/video', {
+      const uploadData = await fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/upload/video', {
         method: 'POST',
         body: formData
       });
@@ -56,7 +56,7 @@
   
 // =============== 第2步：再调用“添加线路”接口，把 videoUrl 放进 body 里 ===============
 try {
-    const data = await fetchWithAuth(`http://localhost:3000/api/gym/${gymId}/addRoute`, {
+    const data = await fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${gymId}/addRoute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

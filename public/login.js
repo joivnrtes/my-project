@@ -38,7 +38,7 @@
       }
 
       // 调用后端登录 API
-      fetch('http://localhost:3000/api/auth/login', {
+      fetch('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/auth/login', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json'

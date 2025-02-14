@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api';
         // 在 DOMContentLoaded 回调中绑定事件
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);

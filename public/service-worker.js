@@ -44,7 +44,7 @@ self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(event.request.url);
 
   // API 请求，直接走网络
-  if (requestUrl.origin === "http://localhost:3000" && requestUrl.pathname.startsWith("/api")) {
+  if (requestUrl.origin === "https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app" && requestUrl.pathname.startsWith("/api")) {
     event.respondWith(
       fetch(event.request).catch(() => {
         return new Response("后端 API 不可用", { status: 503 });

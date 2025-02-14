@@ -28,7 +28,7 @@
 
     // 1) 获取路线详情
     function fetchRouteDetail(gymId, routeId){
-      fetchWithAuth(`http://localhost:3000/api/gym/${gymId}/route/${routeId}`)
+      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${gymId}/route/${routeId}`)
         .then(data => {
           if(!data.success){
             alert("获取线路失败: " + data.message);
@@ -95,7 +95,7 @@
 
     // 3) 点赞路线
     function likeRoute(rId){
-      fetchWithAuth(`http://localhost:3000/api/gym/${gymId}/route/${rId}/like`, {
+      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${gymId}/route/${rId}/like`, {
         method: 'POST'
       })
       .then(data => {
@@ -115,7 +115,7 @@
     // 4) 删除路线
     function deleteRoute(){
       if(!confirm("确定删除这条路线吗？")) return;
-      fetchWithAuth(`http://localhost:3000/api/gym/${gymId}/route/${routeId}`, {
+      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${gymId}/route/${routeId}`, {
         method: 'DELETE'
       })
       .then(data => {
@@ -147,7 +147,7 @@
           const formData = new FormData();
           formData.append('videoFile', file);
 
-          const uploadData = await fetchWithAuth('http://localhost:3000/api/upload/video', {
+          const uploadData = await fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/upload/video', {
             method: 'POST',
             body: formData
           });
@@ -163,7 +163,7 @@
       }
 
       // 发评论
-      fetchWithAuth(`http://localhost:3000/api/gym/${gymId}/route/${routeId}/comment`, {
+      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${gymId}/route/${routeId}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: txt, video: videoUrl })
@@ -243,7 +243,7 @@
     // 7) 删除评论
     function deleteComment(commentId){
       if(!confirm("确定删除此评论吗？")) return;
-      fetchWithAuth(`http://localhost:3000/api/gym/${gymId}/route/${routeId}/comment/${commentId}`, {
+      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/gym/${gymId}/route/${routeId}/comment/${commentId}`, {
         method: 'DELETE'
       })
       .then(data => {

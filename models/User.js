@@ -13,7 +13,7 @@ const UserSchema = new Schema({  // 改成 Schema，而不是 mongoose.Schema
   difficultylevel: { type: String, default: '0' },
   climbingduration: { type: String, default: '0个月' },
   climbingpreference: { type: [String], default: [] },
-  avatarUrl: { type: String, default: 'http://localhost:3000/default-avatar.png' },
+  avatarUrl: { type: String, default: 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png' },
   beta: { type: Number, default: 0 },    
   friends: [{ type: Schema.Types.ObjectId, ref: 'User' }], // 好友列表
   createdAt: { type: Date, default: Date.now }

@@ -15,13 +15,13 @@
             document.getElementById("register-btn").addEventListener("click", validateAndSubmit);
 
         });
-        const API_BASE = 'http://localhost:3000/api';
+        const API_BASE = 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api';
         function previewAvatar(event) {
     const avatarPreview = document.getElementById('avatar-preview');
     const file = event.target.files[0];
 
     if (!file) {
-        avatarPreview.src = 'http://localhost:3000/default-avatar.png';
+        avatarPreview.src = 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
         return;
     }
 
