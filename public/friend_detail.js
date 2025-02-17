@@ -14,7 +14,7 @@ document.getElementById('btn-send-friend-request')
               .addEventListener('click', cancel);
 
     // 获取目标用户的详细信息（需要鉴权）
-    fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/user/${targetUserId}`)
+    fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/user/${targetUserId}`)
       .then(result => {
         if (!result.success || !result.data) {
           alert('获取用户信息失败: ' + result.message);
@@ -22,7 +22,7 @@ document.getElementById('btn-send-friend-request')
         }
         const user = result.data;
         document.getElementById('username').textContent = user.username;
-        document.getElementById('avatar').src = user.avatarUrl || 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
+        document.getElementById('avatar').src = user.avatarUrl || 'https://websocket-server-o0o0.onrender.com/default-avatar.png';
         document.getElementById('height').textContent = '身高(cm): ' + (user.height || '无');
         document.getElementById('armspan').textContent = '臂展(cm): ' + (user.armspan || '无');
         document.getElementById('difficultylevel').textContent = '难度水平: ' + (user.difficultylevel || '无');
@@ -39,7 +39,7 @@ document.getElementById('btn-send-friend-request')
 
     // 申请好友：调用后端接口发起好友请求
     function sendFriendRequest() {
-      fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/friend-request', {
+      fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/friend-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toUserId: targetUserId })

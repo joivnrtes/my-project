@@ -38,7 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ========== 1) 获取帖子详情 ==========
 function fetchPostDetail() {
-  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}`)
+  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/community/post/${postId}`)
     .then(data => {
       if (!data.success) {
         alert("帖子不存在或已删除");
@@ -100,7 +100,7 @@ function renderPost(post) {
 
 // ========== 3) 点赞帖子 ==========
 function likePost(pId) {
-  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${pId}/like`, {
+  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/community/post/${pId}/like`, {
     method: 'POST'
   })
     .then(data => {
@@ -121,7 +121,7 @@ function likePost(pId) {
 // ========== 4) 删除帖子 ==========
 function deletePost() {
   if (!confirm("确认删除该帖子吗？")) return;
-  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}`, {
+  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/community/post/${postId}`, {
     method: 'DELETE'
   })
     .then(data => {
@@ -156,7 +156,7 @@ async function submitComment() {
       const formData = new FormData();
       formData.append('videoFile', file);
 
-      const uploadData = await fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/upload/video', {
+      const uploadData = await fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/upload/video', {
         method: 'POST',
         body: formData
       });
@@ -178,7 +178,7 @@ async function submitComment() {
     video: finalVideoUrl
   };
 
-  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}/comment`, {
+  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/community/post/${postId}/comment`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(bodyData)
@@ -258,7 +258,7 @@ function renderComments(comments) {
 // ========== 7) 删除评论 ==========
 function deleteComment(commentId) {
   if (!confirm("确定删除这条评论吗？")) return;
-  fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/community/post/${postId}/comment/${commentId}`, {
+  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/community/post/${postId}/comment/${commentId}`, {
     method: 'DELETE'
   })
     .then(data => {

@@ -53,7 +53,7 @@ async function attemptRefreshToken() {
   }
 
   try {
-    const res = await fetch('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/auth/refresh', {
+    const res = await fetch('https://websocket-server-o0o0.onrender.com/api/auth/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken })

@@ -1,4 +1,4 @@
-const API_BASE = 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api';
+const API_BASE = 'https://websocket-server-o0o0.onrender.com/api';
         // 在 DOMContentLoaded 回调中绑定事件
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);

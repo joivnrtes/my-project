@@ -29,7 +29,7 @@
           const formData = new FormData();
           formData.append('videoFile', file);
 
-          const uploadData = await fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/upload/video', {
+          const uploadData = await fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/upload/video', {
             method: 'POST',
             body: formData
           });
@@ -47,7 +47,7 @@
 
       // 再发帖
       try {
-        const data = await fetchWithAuth('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/study/post', {
+        const data = await fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/study/post', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, content, video: videoUrl })

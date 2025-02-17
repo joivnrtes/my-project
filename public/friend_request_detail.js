@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // 获取好友请求详情（要求后端提供 GET /api/friend-request/:requestId 接口，并 populate 'from' 字段）
-    fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/friend-request/${requestId}`)
+    fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/friend-request/${requestId}`)
       .then(result => {
         if (!result.success || !result.data) {
           alert('获取好友请求详情失败: ' + result.message);
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         const fromUser = friendReq.from;
-        document.getElementById('avatar').src = fromUser.avatarUrl || 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/default-avatar.png';
+        document.getElementById('avatar').src = fromUser.avatarUrl || 'https://websocket-server-o0o0.onrender.com/default-avatar.png';
         document.getElementById('username').textContent = '用户名: ' + fromUser.username;
         document.getElementById('gender').textContent = '性别: ' + (fromUser.gender || '未设置');
         document.getElementById('height').textContent = '身高(cm): ' + (fromUser.height || '0');
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 处理好友请求（接受或拒绝）
     function handleRequest(action) {
-      fetchWithAuth(`https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/friend-request/${requestId}/handle`, {
+      fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/friend-request/${requestId}/handle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })

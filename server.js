@@ -35,7 +35,7 @@ if (!fs.existsSync(uploadDir)) {
 // 中间件
 app.use(express.json()); // 解析 JSON 请求体
 app.use(cors({
-  origin: ['http://127.0.0.1:8080', 'http://localhost:8080', 'http://localhost:3000', 'https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app',], 
+  origin: [ 'http://localhost:3000', 'https://my-project-flax-alpha.vercel.app',], 
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的 HTTP 方法
   allowedHeaders: ['Content-Type', 'Authorization'], // 允许的请求头
   credentials: true, // 是否允许发送跨域请求时携带 Cookies
@@ -46,9 +46,9 @@ app.use((req, res, next) => {
     'Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-    "connect-src 'self' http://localhost:3000 ws://localhost:3000 https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app wss://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app; " +
+    "connect-src 'self' http://localhost:3000 ws://localhost:3000 https://my-project-flax-alpha.vercel.app wss://my-project-flax-alpha.vercel.app; " +
     "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' http://localhost:3000 http://127.0.0.1:8080 data:;"
+    "img-src 'self' data:;" // 如果你还有其他图片来源，继续加
   );
   next();
 });

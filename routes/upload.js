@@ -42,7 +42,7 @@ router.post('/video', authenticate, uploadVideo.single('videoFile'), async (req,
     // 拼接可访问路径
     // 上传成功后
     const videoPath = `/uploads/videos/${req.file.filename}`;
-    const fullUrl = `http://localhost:3000${videoPath}`;
+    const fullUrl = `https://websocket-server-o0o0.onrender.com${videoPath}`;
 
 
     res.json({

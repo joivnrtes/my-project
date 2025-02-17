@@ -38,7 +38,7 @@
       }
 
       // 调用后端登录 API
-      fetch('https://my-project-pkbo1zqno-ans-projects-cdc13964.vercel.app/api/auth/login', {
+      fetch('https://websocket-server-o0o0.onrender.com/api/auth/login', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json'
