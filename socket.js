@@ -8,25 +8,28 @@ const Chat = require('./models/Chat');
 const { verifyTokenAndGetUserId } = require('./utils/jwt');
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app);  // 统一 HTTP + WebSocket 服务器
 
+// 允许 CORS
 app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
+app.use(express.json());  // 允许解析 JSON 请求体
 
+// 初始化 Socket.io
 const io = new Server(server, {
     cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
-// 连接 MongoDB（确保 WebSocket 服务器也能访问数据库）
+// ✅ 连接 MongoDB
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ WebSocket 服务器连接 MongoDB 成功'))
     .catch(err => {
         console.error('❌ MongoDB 连接失败:', err);
-        process.exit(1);  // 连接失败时终止进程，防止应用在没有数据库的情况下运行
+        process.exit(1);
     });
 
 const onlineUsers = new Map();
 
-// 处理 WebSocket 连接
+// ✅ WebSocket 处理
 io.on('connection', async (socket) => {
     const token = socket.handshake.query.token;
     if (!token) {
@@ -52,6 +55,7 @@ io.on('connection', async (socket) => {
     onlineUsers.set(userId, socket);
     console.log(`✅ WebSocket: 用户 ${userId} 连接成功`);
 
+    // 监听消息
     socket.on('message', async (data) => {
         try {
             const { to, message } = data;
@@ -69,15 +73,45 @@ io.on('connection', async (socket) => {
         }
     });
 
+    // 断开连接
     socket.on('disconnect', () => {
         console.log(`🔴 用户 ${userId} 断开连接`);
         onlineUsers.delete(userId);
     });
 });
 
-// 启动 WebSocket 服务器
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-    console.log(`🚀 WebSocket 服务器运行在端口 ${PORT}`);
+// ✅ HTTP API 处理
+
+// 🌟 `GET /` 让 Render 不返回 404
+app.get('/', (req, res) => {
+    res.send("✅ WebSocket 服务器运行中！你可以使用 WebSocket 连接");
 });
 
+// 🌟 `POST /api/messages` - 允许客户端通过 HTTP 发送消息
+app.post('/api/messages', async (req, res) => {
+    try {
+        const { from, to, message } = req.body;
+        if (!from || !to || !message) {
+            return res.status(400).json({ error: "缺少必要字段" });
+        }
+
+        const chatMessage = new Chat({ from, to, message });
+        await chatMessage.save();
+
+        // 如果接收方在线，推送消息
+        if (onlineUsers.has(to)) {
+            onlineUsers.get(to).emit('message', { from, message });
+        }
+
+        res.status(201).json({ message: "消息发送成功", data: chatMessage });
+    } catch (error) {
+        console.error('❌ 发送消息失败:', error);
+        res.status(500).json({ error: "服务器错误" });
+    }
+});
+
+// ✅ 监听 Render 需要的 `process.env.PORT`
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+    console.log(`🚀 HTTP + WebSocket 服务器运行在端口 ${PORT}`);
+});
