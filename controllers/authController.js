@@ -2,7 +2,7 @@
 const User = require('../models/User'); // 根据实际路径调整
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
