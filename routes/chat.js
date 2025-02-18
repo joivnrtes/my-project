@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Chat = require('../models/Chat'); // 引入 Chat 模型
 const authenticate = require('../middlewares/authenticate'); // 认证中间件
-const { io } = require('../server'); // ✅ 从 server.js 获取 WebSocket `io`
+const io = require('../server').io;// ✅ 从 server.js 获取 WebSocket `io`
 
 const sendMessageToUser = (userId, message) => {
   io.to(userId).emit('message', message);

@@ -26,7 +26,7 @@ connectDB();
 
 // 🔥 解决 Redis 连接失败的问题
 const redis = require('redis');
-const REDIS_URL = process.env.REDIS_URL;
+const REDIS_URL = process.env.REDIS_URL || null;  // ✅ 避免 undefined
 
 let redisClient;
 if (REDIS_URL) {
@@ -119,5 +119,5 @@ server.listen(PORT, () => {
     console.log(`🚀 服务器运行在端口 ${PORT}`);
 });
 
-module.exports = { app, io };
+module.exports.io = io;
 
