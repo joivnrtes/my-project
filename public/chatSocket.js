@@ -1,5 +1,3 @@
-import { io } from "socket.io-client";
-
 let socket = null;
 let reconnectTimer = null;
 
@@ -26,7 +24,7 @@ function connectWS() {
   }
 
   // ✅ 改为 Render 服务器地址
-  const SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "wss://websocket-server-o0o0.onrender.com";
+  const SERVER_URL =  "wss://websocket-server-o0o0.onrender.com";
 
   socket = io(SERVER_URL, {
     transports: ["websocket"],

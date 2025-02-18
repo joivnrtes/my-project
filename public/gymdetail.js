@@ -9,7 +9,7 @@
   }
 
   function fetchGymDetail(id) {
-    fetch(`hhttps://websocket-server-o0o0.onrender.com/api/gym/${id}`)
+    fetch(`https://websocket-server-o0o0.onrender.com/api/gym/${id}`)
       .then(response => {
         if (!response.ok) {
           throw new Error('获取岩馆详情失败');

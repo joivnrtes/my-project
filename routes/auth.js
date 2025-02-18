@@ -57,6 +57,7 @@ router.post('/upload-avatar', upload.single('avatar'), authController.uploadAvat
 router.post('/login', authController.login);
 
 
+
 // 读取本地 JSON 文件
 const filePath = path.join(__dirname, '../data/chinaProvinceCities.json');
 let provinceCityData = {};
@@ -169,5 +170,8 @@ router.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: '服务器内部错误', error: err.message });
 });
+
+console.log("=== LOADED auth.js ===");
+
 
 module.exports = router;
