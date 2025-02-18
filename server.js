@@ -18,22 +18,41 @@ const userRouter = require('./routes/user');
 const chatRoutes = require('./routes/chat');
 
 const app = express();
-const server = http.createServer(app);  // 🚀 统一 HTTP + WebSocket 服务器
+const server = http.createServer(app);  
 const io = new Server(server, { cors: { origin: '*' } });
 
 // 🔌 连接数据库
 connectDB();
 
-// 中间件
+// 🔥 解决 Redis 连接失败的问题
+const redis = require('redis');
+const REDIS_URL = process.env.REDIS_URL;
+
+let redisClient;
+if (REDIS_URL) {
+    redisClient = redis.createClient({ url: REDIS_URL });
+
+    redisClient.on('error', (err) => {
+        console.error('❌ Redis Client Error:', err);
+    });
+
+    redisClient.connect()
+        .then(() => console.log('✅ Redis 连接成功！'))
+        .catch(err => console.error('❌ Redis 连接失败:', err));
+} else {
+    console.log("⚠️ 未设置 REDIS_URL，跳过 Redis 连接");
+}
+
+// ✅ 让 Express 处理 API 请求
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://my-project-flax-alpha.vercel.app'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+    origin: ['http://localhost:3000', 'https://my-project-flax-alpha.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
 }));
 
-// 📌 让 Express 处理 API
+// 📌 挂载路由
 app.use('/api/auth', authRoutes);
 app.use('/api/gym', gymRoutes);
 app.use('/api/community', communityRoutes);
@@ -43,7 +62,7 @@ app.use('/api/friend-request', friendRequestRouter);
 app.use('/api/user', userRouter);
 app.use('/api/chat', chatRoutes);
 
-// 📌 让 WebSocket 处理实时通信
+// 📌 处理 WebSocket 连接
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
@@ -101,3 +120,4 @@ server.listen(PORT, () => {
 });
 
 module.exports = { app, io };
+
