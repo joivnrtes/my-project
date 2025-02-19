@@ -53,7 +53,7 @@
     titleSpan.className = "route-title";
     titleSpan.textContent = route.routeName;
     titleSpan.addEventListener('click', () => {
-          window.location.href = `routedetail.html?gymId=${gymId}&routeId=${route._id}`;
+          window.location.href = `routeDetail.html?gymId=${gymId}&routeId=${route._id}`;
         });
 
     const creatorSpan = document.createElement('span');

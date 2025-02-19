@@ -251,3 +251,7 @@ let postId = null;
         alert("删除评论请求异常");
       });
     }
+
+    function goBack() {
+      history.back();
+    }

@@ -21,9 +21,6 @@
       fetchRouteDetail(gymId, routeId);
     });
 
-    function goBack() {
-      history.back();
-    }
 
 
     // 1) 获取路线详情
@@ -258,4 +255,8 @@
         console.error("删除评论出错:", err);
         alert("删除评论请求异常");
       });
+    }
+
+    function goBack() {
+      history.back();
     }

@@ -2,13 +2,6 @@
 async function fetchWithAuth(url, options = {}) {
   let accessToken = localStorage.getItem('accessToken');
 
-  if (!accessToken) {
-    console.warn('🚨 未登录，跳转到登录页面');
-    alert('请先登录！');
-    logoutUser();
-    throw new Error('用户未登录');
-  }
-
   // 设置请求头
   options.headers = options.headers || {};
   options.headers['Authorization'] = `Bearer ${accessToken}`;
@@ -82,9 +75,22 @@ async function attemptRefreshToken() {
 }
 
 // 3️⃣ 用户登出并清除 Token
+let hasPromptedLogout = false;
+
 function logoutUser() {
+  // 如果已经提示过，则不再执行
+  if (hasPromptedLogout) {
+    return;
+  }
+  hasPromptedLogout = true;
+
+  // 1. 清理本地 Token
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
+
+  // 2. 弹窗提示一次
   alert('登录已过期，请重新登录');
+
+  // 3. 跳转到登录页
   window.location.href = 'login.html';
 }

@@ -39,12 +39,22 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// 拦截网络请求，使用缓存优先策略
+// 🔹 拦截网络请求
 self.addEventListener("fetch", (event) => {
-  const requestUrl = new URL(event.request.url);
+  let url = event.request.url;
 
-  // API 请求，直接走网络
-  if (requestUrl.origin === "https://websocket-server-o0o0.onrender.com" && requestUrl.pathname.startsWith("/api")) {
+  // 🚀 **如果请求的 URL 是 HTTP 版本的 uploads 资源，自动替换为 HTTPS**
+  if (url.startsWith("http://websocket-server-o0o0.onrender.com/uploads/")) {
+    url = url.replace("http://", "https://");
+    event.respondWith(fetch(url).catch((error) => {
+      console.error("❌ Fetch 失败:", error);
+      return new Response(null, { status: 500, statusText: "Service Worker Fetch Error" });
+    }));
+    return;
+  }
+
+  // 🔹 **API 请求，直接走网络**
+  if (url.startsWith("https://websocket-server-o0o0.onrender.com/api")) {
     event.respondWith(
       fetch(event.request).catch(() => {
         return new Response("后端 API 不可用", { status: 503 });
@@ -52,6 +62,7 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
+
 
   // 其他静态资源请求，使用缓存优先策略
   event.respondWith(

@@ -1,44 +1,51 @@
 const express = require('express');
 const router = express.Router();
-const Chat = require('../models/Chat'); // 引入 Chat 模型
-const authenticate = require('../middlewares/authenticate'); // 认证中间件
-const io = require('../server').io;// ✅ 从 server.js 获取 WebSocket `io`
+const Chat = require('../models/Chat');
+const authenticate = require('../middlewares/authenticate');
+const { redisClient } = require("../server"); // ✅ 从 server.js 引入 redisClient
 
-const sendMessageToUser = (userId, message) => {
-  io.to(userId).emit('message', message);
-};
 
-// ✅ 发送消息并存入数据库
-router.post('/send', authenticate, async (req, res) => {
-  try {
-    const { to, message } = req.body;
-    const from = req.user.id;
-
-    if (!to || !message) {
-      return res.status(400).json({ success: false, message: '接收者和消息不能为空' });
+module.exports = function (io) {
+  const sendMessageToUser = async (userId, message) => {
+    if (io.sockets.adapter.rooms.has(userId)) {
+      io.to(userId).emit("message", message);
+    } else {
+      console.log(`📪 用户 ${userId} 不在线，存入 Redis`);
+      if (redisClient) {
+        await redisClient.lPush(`offline_messages:${userId}`, JSON.stringify(message));
+      }
     }
+  };
 
-    // ✅ 存入数据库
-    const chatMessage = new Chat({ from, to, message });
-    await chatMessage.save();
+  // ✅ 发送消息
+  router.post("/send", authenticate, async (req, res) => {
+    try {
+      const from = req.user.id;
+      const { to, message } = req.body;
 
-    // ✅ 发送 WebSocket 消息给对方
-    sendMessageToUser(to, { from, message });
+      if (!to || !message) {
+        return res.status(400).json({ error: "缺少必要参数" });
+      }
 
-    res.json({ success: true, chat: chatMessage });
-  } catch (err) {
-    res.status(500).json({ success: false, message: '消息发送失败' });
-  }
-});
+      const chatMessage = new Chat({ from, to, message });
+      await chatMessage.save();
 
-// ✅ 获取聊天记录（按时间排序）
-router.get('/history', authenticate, async (req, res) => {
+      sendMessageToUser(to, { from, message, timestamp: new Date().toISOString() });
+
+      return res.json({ success: true, chat: chatMessage });
+    } catch (err) {
+      console.error("🔥 消息存储失败:", err);
+      return res.status(500).json({ success: false, message: "消息发送失败", error: err.message });
+    }
+  });
+
+ // ✅ 获取聊天记录
+ router.get("/history", authenticate, async (req, res) => {
   try {
     const { friendId } = req.query;
     const userId = req.user.id;
-
     if (!friendId) {
-      return res.status(400).json({ success: false, message: '好友 ID 不能为空' });
+      return res.status(400).json({ success: false, message: "好友 ID 不能为空" });
     }
 
     const chats = await Chat.find({
@@ -47,40 +54,33 @@ router.get('/history', authenticate, async (req, res) => {
         { from: friendId, to: userId }
       ]
     })
-    .populate('from', 'username avatarUrl')
-    .populate('to', 'username avatarUrl')
+    .populate({ path: "from", select: "username avatarUrl", strictPopulate: false })
+    .populate({ path: "to", select: "username avatarUrl", strictPopulate: false })
     .sort({ timestamp: 1 });
 
-    res.json({ success: true, chats });
+    return res.json({ success: true, chats });
   } catch (err) {
-    res.status(500).json({ success: false, message: '获取聊天记录失败' });
+    return res.status(500).json({ success: false, message: "获取聊天记录失败" });
   }
 });
 
-// ✅ 删除聊天记录
-router.delete('/history', authenticate, async (req, res) => {
-  try {
-    const { friendId } = req.query;
-    const userId = req.user.id;
+  // ✅ 删除聊天记录
+  router.delete("/history", authenticate, async (req, res) => {
+    try {
+      const { friendId } = req.query;
+      const userId = req.user.id;
 
-    if (!friendId) {
-      return res.status(400).json({ success: false, message: '好友 ID 不能为空' });
+      if (!friendId) {
+        return res.status(400).json({ success: false, message: "好友 ID 不能为空" });
+      }
+
+      const deleted = await Chat.deleteMany({ $or: [{ from: userId, to: friendId }, { from: friendId, to: userId }] });
+
+      return res.json({ success: true, message: "聊天记录已删除" });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: "删除聊天记录失败" });
     }
+  });
 
-    await Chat.deleteMany({
-      $or: [
-        { from: userId, to: friendId },
-        { from: friendId, to: userId }
-      ]
-    });
-
-    // ✅ 通知对方聊天记录被删除
-    sendMessageToUser(friendId, { type: 'delete_chat', from: userId });
-
-    res.json({ success: true, message: '聊天记录已删除' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: '删除聊天记录失败' });
-  }
-});
-
-module.exports = router;
+  return router;
+};

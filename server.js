@@ -16,11 +16,22 @@ const communityRoutes = require('./routes/community');
 const studyRoutes = require('./routes/study');
 const friendRequestRouter = require('./routes/friend.js');
 const userRouter = require('./routes/user');
-const chatRoutes = require('./routes/chat');
+const chatRoutesFactory = require('./routes/chat');
 
 const app = express();
 const server = http.createServer(app);  
-const io = new Server(server, { cors: { origin: '*' } });
+const io = new Server(server, {
+    cors: {
+        origin: [
+            "http://localhost:3000",
+            "https://my-project-flax-alpha.vercel.app",
+            "https://websocket-server-o0o0.onrender.com"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
 
 // 🔌 连接数据库
 connectDB();
@@ -55,19 +66,30 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-    res.setHeader(
-      'Content-Security-Policy',
-      "default-src 'self' https://websocket-server-o0o0.onrender.com; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; " +
-      "connect-src 'self' http://localhost:3000 ws://localhost:3000 " +
-        "https://websocket-server-o0o0.onrender.com wss://websocket-server-o0o0.onrender.com " +
-        "https://cdn.socket.io; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' http://localhost:3000 http://127.0.0.1:8080 data:;"
-    );
+    if (req.user && req.user.avatarUrl) {
+        req.user.avatarUrl = req.user.avatarUrl.replace(/^http:\/\//, "https://");
+    }
     next();
-  });
-  
+});
+
+
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self' https://websocket-server-o0o0.onrender.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; " +
+        "connect-src 'self' http://localhost:3000 ws://localhost:3000 " +
+          "https://websocket-server-o0o0.onrender.com wss://websocket-server-o0o0.onrender.com " +
+          "https://cdn.socket.io; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' https://websocket-server-o0o0.onrender.com https://websocket-server-o0o0.onrender.com/uploads/ data: blob:; " +
+        "media-src 'self' https://websocket-server-o0o0.onrender.com/uploads/;"
+    );
+    
+    next();
+});
+
+
   
 
 // 📌 挂载路由
@@ -78,6 +100,9 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/friend-request', friendRequestRouter);
 app.use('/api/user', userRouter);
+
+// 现在利用依赖注入加载聊天路由
+const chatRoutes = chatRoutesFactory(io);
 app.use('/api/chat', chatRoutes);
 
 // 静态资源
@@ -111,6 +136,7 @@ io.on('connection', (socket) => {
     const token = socket.handshake.query.token;
     if (!token) {
         console.error('❌ WebSocket 连接失败：Token 为空');
+        socket.emit("error", { message: "Token 为空" });
         socket.disconnect();
         return;
     }
@@ -132,26 +158,38 @@ io.on('connection', (socket) => {
     onlineUsers.set(userId, socket);
     console.log(`✅ WebSocket: 用户 ${userId} 连接成功`);
 
-    socket.on('message', async (data) => {
+    socket.on("enter_chat", ({ to }) => {
+        console.log(`📩 用户 ${socket.id} 进入聊天 ${to}`);
+        socket.join(to);
+        socket.emit("entered_chat", { success: true, chatWith: to });
+      });
+      
+      socket.on("message", async (data, callback) => {
         try {
-            const { to, message } = data;
-            if (!to || !message) return;
+            if (!data || !data.to || !data.message) {
+                return callback({ success: false, error: "消息格式错误" });
+            }
+            console.log(`📩 ${userId} 发送消息给 ${data.to}: ${data.message}`);
 
-            const chatMessage = new Chat({ from: userId, to, message });
+            const chatMessage = new Chat({ from: userId, to: data.to, message: data.message });
             await chatMessage.save();
 
-            if (onlineUsers.has(to)) {
-                onlineUsers.get(to).emit('message', { from: userId, message });
+            if (onlineUsers.has(data.to)) {
+                onlineUsers.get(data.to).emit("message", { from: userId, message: data.message });
+            } else {
+                if (redisClient) {
+                    await redisClient.lPush(`offline_messages:${data.to}`, JSON.stringify({ from: userId, message: data.message }));
+                }
             }
-            console.log(`📩 用户 ${userId} 发送消息: ${message} 给用户 ${to}`);
+            return callback({ success: true });
         } catch (err) {
-            console.error('❌ WebSocket 消息处理错误:', err);
+            return callback({ success: false, error: err.message });
         }
     });
 
-    socket.on('disconnect', () => {
-        console.log(`🔴 用户 ${userId} 断开连接`);
+    socket.on("disconnect", () => {
         onlineUsers.delete(userId);
+        console.log(`🔴 用户 ${userId || "未知"} 断开连接`);
     });
 });
 
@@ -164,4 +202,5 @@ server.listen(PORT, () => {
 console.log("=== LOADED server.js ===");
 
 module.exports.io = io;
+module.exports = { redisClient };
 

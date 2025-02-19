@@ -101,7 +101,6 @@ window.addEventListener("load", function () {
   setInterval(updateRegistrationDays, 60000); 
   setInterval(refreshBeta, 60000);// 每60秒更新一次
 
-  connectWS(); 
     
   loadFriendList();
   loadFriendRequests();
@@ -948,11 +947,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function loadFriendList() {
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-if (!userInfo || (!userInfo._id && !userInfo.id)) {
-  alert("请先登录");
-  window.location.href = "login.html";
-  return;
-}
 
 const userId = userInfo._id || userInfo.id;
 if (!userId) {
@@ -1135,11 +1129,27 @@ function openFriendInfo(event, targetUserId) {
 
 function getCurrentUserId() {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  if (!userInfo) {
+    console.error("❌ 用户信息未找到，请重新登录");
+    return null;
+}
   return (userInfo._id || userInfo.id).toString();
 }
+
+
     // ========== 聊天 ==========
     let currentChatUser = ''; // 当前聊天的用户ID
     let currentChatUsername = ''; // 显示的用户名
+
+    //  Socket.IO 版本:
+    function sendWSMessage(data) {
+      if (socket && socket.connected) {
+        socket.emit("chat_event", data);
+        console.log("📩 发送 WebSocket 消息:", data);
+      } else {
+        console.error("❌ WebSocket 未连接，消息发送失败");
+      }
+    }
 
     function enterChat(event, friendId, friendUsername) {
       const chatMessagesEl = document.getElementById('chat-messages');
@@ -1160,7 +1170,9 @@ function getCurrentUserId() {
       document.getElementById('friend-list-container').style.display = 'none';
       document.getElementById('chat-container').style.display = 'block';
     
-      //  Socket.IO 版本:
+
+      
+
       if (socket && socket.connected) {
         sendWSMessage({ type: "enter_chat", to: friendId });
       }
@@ -1176,17 +1188,18 @@ function getCurrentUserId() {
           }
     
           const existingMessages = new Set();
-          Array.from(chatMessagesEl.children).forEach(msg => existingMessages.add(msg.textContent.trim()));
-    
+          Array.from(chatMessagesEl.children).forEach(msg => existingMessages.add(msg.dataset.id));
+
           data.chats.forEach(chat => {
             const bubbleType = (chat.from._id.toString() === currentUserId) ? 'me' : 'friend';
-            
-            // ✅ 只渲染新消息，避免重复
-            if (!existingMessages.has(chat.message.trim())) {
+
+            if (!existingMessages.has(chat._id)) {
               const bubble = createBubble(chat.message, bubbleType, chat.timestamp);
+              bubble.dataset.id = chat._id; // ✅ 绑定唯一 ID，防止重复
               chatMessagesEl.appendChild(bubble);
             }
           });
+
     
           chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
         })
@@ -1214,7 +1227,7 @@ function getCurrentUserId() {
     timeEl.textContent = dateObj.toLocaleTimeString();
   }
   
-  bubble.innerHTML = text;
+  bubble.textContent = text;
   bubble.appendChild(timeEl);
   return bubble;
 }
@@ -1225,6 +1238,11 @@ function getCurrentUserId() {
   const chatInputEl = document.getElementById('chat-input');
   const chatMessagesEl = document.getElementById('chat-messages');
   const message = chatInputEl.value.trim();
+  const fromUserId = getCurrentUserId();
+if (!fromUserId) {
+    alert("用户未登录或信息丢失，请重新登录");
+    return;
+}
 
   if (!message) {
     alert('请输入消息内容');
@@ -1240,11 +1258,17 @@ function getCurrentUserId() {
   chatMessagesEl.appendChild(myMsg);
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 
-  // 发送消息到服务器
+ // 立即通过 WebSocket 发送
+ sendWSMessage({ type: "message", to: currentChatUser, message });
+
+ // 发送消息到服务器
   fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/chat/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to: currentChatUser, message })
+    body: JSON.stringify({  
+      to: currentChatUser, 
+      message 
+    })
   })
   .then(data => {
     if (!data.success) {
@@ -1258,6 +1282,11 @@ function getCurrentUserId() {
 
 
 function deleteChatHistory() {
+  if (!currentChatUser) {
+    alert("未选择聊天对象，无法删除聊天记录");
+    return;
+  }
+
   if (!confirm('确定删除该好友的所有聊天记录？')) return;
 
   fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?friendId=${currentChatUser}`, {
