@@ -57,7 +57,7 @@ app.use(cors({
 app.use((req, res, next) => {
     res.setHeader(
       'Content-Security-Policy',
-      "default-src 'self'; " +
+      "default-src 'self' https://websocket-server-o0o0.onrender.com; " +
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; " +
       "connect-src 'self' http://localhost:3000 ws://localhost:3000 " +
         "https://websocket-server-o0o0.onrender.com wss://websocket-server-o0o0.onrender.com " +

@@ -1160,13 +1160,13 @@ function getCurrentUserId() {
       document.getElementById('friend-list-container').style.display = 'none';
       document.getElementById('chat-container').style.display = 'block';
     
-      // ✅ 发送 WebSocket 事件，通知进入聊天（但确保 WebSocket 连接已建立）
-      if (ws && ws.readyState === WebSocket.OPEN) {
+      //  Socket.IO 版本:
+      if (socket && socket.connected) {
         sendWSMessage({ type: "enter_chat", to: friendId });
       }
-    
+
       const currentUserId = getCurrentUserId();
-    
+
       // ✅ 加载历史聊天记录，确保不重复渲染
       fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?friendId=${friendId}`)
         .then(data => {
