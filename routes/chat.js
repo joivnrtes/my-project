@@ -17,6 +17,29 @@ module.exports = function (io) {
     }
   };
 
+  router.post("/read-messages/:friendId", authenticate, async (req, res) => {
+    try {
+      const userId = req.user.id; // 确保用户已登录
+      const friendId = req.params.friendId;
+  
+      if (!userId || !friendId) {
+        return res.status(400).json({ success: false, message: "用户 ID 或好友 ID 缺失" });
+      }
+  
+      // 更新数据库中的未读消息状态
+      await Chat.updateMany(
+        { senderId: friendId, receiverId: userId, isRead: false }, 
+        { $set: { isRead: true } }
+      );
+  
+      res.json({ success: true, message: "消息标记为已读" });
+    } catch (error) {
+      console.error("❌ 标记消息为已读失败:", error);
+      res.status(500).json({ success: false, message: "服务器错误" });
+    }
+  });
+  
+
   // ✅ 发送消息
   router.post("/send", authenticate, async (req, res) => {
     try {

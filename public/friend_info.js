@@ -18,6 +18,7 @@
           return;
         }
         const user = result.data;
+        console.log("📌 获取的用户数据:", user); // ✅ 这里打印 API 返回的数据
         document.getElementById('username').textContent = user.username;
         document.getElementById('avatar').src = user.avatarUrl || 'https://websocket-server-o0o0.onrender.com/default-avatar.png';
         document.getElementById('height').textContent = '身高(cm): ' + (user.height || '无');
@@ -26,7 +27,7 @@
         document.getElementById('climbingduration').textContent = '攀岩时长: ' + (user.climbingduration || '未知');
         document.getElementById('climbingpreference').textContent = '攀岩偏好: ' +
           (Array.isArray(user.climbingpreference) ? user.climbingpreference.join(', ') : '无');
-        document.getElementById('days').textContent = '注册天数: ' + (user.days || 0);
+        document.getElementById('days').textContent = '注册天数: ' + (user.daysComputed || 0);
         document.getElementById('beta').textContent = '分享 Beta: ' + (user.beta || 0);
       })
       .catch(err => {

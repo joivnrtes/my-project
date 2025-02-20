@@ -38,10 +38,11 @@ function connectWS() {
 
   socket = io(SERVER_URL, {
     transports: ["websocket"],
-    auth: { token }, // 改用 auth 方式
+    query: { token: localStorage.getItem("accessToken") },
     reconnection: false, 
   });
-
+  
+  
   socket.on("connect", () => {
     console.log("[WS] 连接成功:", socket.id);
     clearTimeout(reconnectTimer);
@@ -52,6 +53,22 @@ function connectWS() {
       sendWSMessage(messageQueue.shift());
     }
   });
+
+  // ✅ 监听 WebSocket 收到新消息时显示红点
+  socket.on("newMessage", (message) => {
+    console.log("📩 收到新消息:", message);
+    
+    if (message.senderId !== getCurrentUserId()) {
+      const chatBtn = document.querySelector(`.chat-btn[data-friend-id="${message.senderId}"]`);
+      if (chatBtn) {
+        const unreadBadge = chatBtn.querySelector("span");
+        if (unreadBadge) {
+          unreadBadge.style.display = "block"; // ✅ 显示红点
+        }
+      }
+    }
+  });
+  
 
   socket.on("disconnect", (reason) => {
     console.warn(`[WS] 连接断开 (${reason})，第 ${reconnectAttempts + 1} 次尝试重连...`);
@@ -96,6 +113,22 @@ function connectWS() {
     }
   });
 }
+
+// ✅ 进入聊天后隐藏红点
+function markMessagesAsRead(friendId) {
+  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/read-messages/${friendId}`, { method: "POST" })
+    .then(() => {
+      const chatBtn = document.querySelector(`.chat-btn[data-friend-id="${friendId}"]`);
+      if (chatBtn) {
+        const unreadBadge = chatBtn.querySelector("span");
+        if (unreadBadge) {
+          unreadBadge.style.display = "none"; // ✅ 进入聊天后隐藏红点
+        }
+      }
+    })
+    .catch(err => console.error("❌ 标记消息已读失败:", err));
+}
+
 
 function sendWSMessage(data) {
   if (!socket || !socket.connected) {

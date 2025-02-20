@@ -135,35 +135,39 @@ window.addEventListener("load", function () {
     ? userInfo.avatarUrl
     : 'https://websocket-server-o0o0.onrender.com/default-avatar.png';
 
-        // 动态设置头像 URL，添加时间戳避免缓存
-        document.getElementById('profile-avatar').src = `${avatarUrl}?timestamp=${new Date().getTime()}`;
-
-        // 渲染用户数据到页面
-        document.getElementById('profile-username').textContent = userInfo.username || "未设置";
-        document.getElementById('profile-gender').textContent = "性别: " + (userInfo.gender || "未设置");
-        document.getElementById('profile-height').textContent = "身高(cm): " + (userInfo.height || "0");
-        document.getElementById('profile-armspan').textContent = "臂展(cm): " + (userInfo.armspan || "0");
-        document.getElementById('profile-difficultylevel').textContent = "难度水平: " + (userInfo.difficultylevel || "0");
-        document.getElementById('profile-climbingduration').textContent = "攀岩时长: " + (userInfo.climbingduration || "0个月");
-        document.getElementById('profile-climbingpreference').textContent = "攀岩偏好: " + (userInfo.climbingpreference || "未设置");
-        document.getElementById('profile-beta').textContent = userInfo.beta || 0;
-
-    // 更新注册天数：根据 createdAt 字段计算
-    // 在渲染用户数据时：
-if (userInfo.createdAt) {
-  if (userInfo.registrationDays !== undefined) {
-    document.getElementById('profile-days').textContent = userInfo.registrationDays;
-  } else {
-    const registrationDate = new Date(userInfo.createdAt);
-    const now = new Date();
-    const days = Math.floor((now - registrationDate) / (1000 * 60 * 60 * 24));
-    document.getElementById('profile-days').textContent = days;
+    // 只在头像发生变化时添加时间戳，避免不必要的缓存刷新
+  const profileAvatar = document.getElementById('profile-avatar');
+  if (profileAvatar && !profileAvatar.src.includes(avatarUrl)) {
+    profileAvatar.src = `${avatarUrl}?timestamp=${new Date().getTime()}`;
   }
-} else {
-  document.getElementById('profile-days').textContent = userInfo.days || 1;
-}
+  
 
-  };
+  // 定义一个更新文本的工具函数，避免 `null` 报错
+  function updateElementText(id, text) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = text;
+  }
+
+  // 渲染用户数据到页面
+updateElementText('profile-username', userInfo.username || "未设置");
+updateElementText('profile-gender', "性别: " + (userInfo.gender || "未设置"));
+updateElementText('profile-height', "身高(cm): " + (userInfo.height || "0"));
+updateElementText('profile-armspan', "臂展(cm): " + (userInfo.armspan || "0"));
+updateElementText('profile-difficultylevel', "难度水平: " + (userInfo.difficultylevel || "0"));
+updateElementText('profile-climbingduration', "攀岩时长: " + (userInfo.climbingduration || "0个月"));
+updateElementText('profile-climbingpreference', "攀岩偏好: " + (userInfo.climbingpreference || "未设置"));
+updateElementText('profile-beta', userInfo.beta || 0);
+
+  // ✅ 更新注册天数
+  updateRegistrationDays();
+}
+   // ✅ 监听 localStorage 变化（跨页面同步 UI）
+window.addEventListener("storage", (event) => {
+  if (event.key === "userInfo") {
+    console.log("🔄 localStorage userInfo 变更，更新 UI");
+    updateRegistrationDays();
+  }
+});
 
   const searchInputCommunity = document.getElementById('search-input-community');
   if (searchInputCommunity) {
@@ -1011,13 +1015,33 @@ if (!userId) {
   const btnDiv = document.createElement('div');
 
   // 创建“聊天”按钮
-  const chatBtn = document.createElement('button');
-  chatBtn.textContent = '聊天';
-  chatBtn.addEventListener('click', function(event) {
-    event.stopPropagation();
-    enterChat(event, friend._id, friend.username);
-  });
-  btnDiv.appendChild(chatBtn);
+const chatBtn = document.createElement('button');
+chatBtn.textContent = '聊天';
+chatBtn.style.position = 'relative'; // ✅ 让红点能正确定位
+
+// 创建红点（默认隐藏）
+const unreadBadge = document.createElement('span');
+unreadBadge.style.display = 'none'; // 默认隐藏
+unreadBadge.style.position = 'absolute';
+unreadBadge.style.top = '5px';
+unreadBadge.style.right = '5px';
+unreadBadge.style.width = '10px';
+unreadBadge.style.height = '10px';
+unreadBadge.style.backgroundColor = 'red';
+unreadBadge.style.borderRadius = '50%';
+
+// 将红点添加到聊天按钮
+chatBtn.appendChild(unreadBadge);
+
+// 点击聊天按钮时进入聊天，并清除未读消息
+chatBtn.addEventListener('click', function (event) {
+  event.stopPropagation();
+  enterChat(event, friend._id, friend.username);
+
+  // ✅ 进入聊天后，清除未读消息提示
+  markMessagesAsRead(friend._id);
+});
+btnDiv.appendChild(chatBtn);
 
   // 创建“删除”按钮
   const deleteBtn = document.createElement('button');
@@ -1038,8 +1062,6 @@ if (!userId) {
       console.error('加载好友列表异常:', err);
     });
 }
-
-
 
     function handleFriendRequest(requestId, action) {
   fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/friend-request/${requestId}/handle`, {
@@ -1315,20 +1337,21 @@ function deleteChatHistory() {
     // ========== 编辑资料弹窗 ==========
     const overlay = document.getElementById('edit-profile-overlay');
 
-        // 定义一个函数用于更新注册天数显示
-        function updateRegistrationDays() {
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-  if (userInfo && userInfo.createdAt) {
-    if (userInfo.registrationDays !== undefined) {
-      document.getElementById('profile-days').textContent = userInfo.registrationDays;
-    } else {
-      const registrationDate = new Date(userInfo.createdAt);
-      const now = new Date();
-      const days = Math.floor((now - registrationDate) / (1000 * 60 * 60 * 24));
-      document.getElementById('profile-days').textContent = days;
+    function updateRegistrationDays() {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      if (userInfo && userInfo.createdAt) {
+        const registrationDate = new Date(userInfo.createdAt);
+        const now = new Date();
+        const days = Math.floor((now - registrationDate) / (1000 * 60 * 60 * 24));
+    
+        // 更新到 localStorage，确保所有页面都可以拿到最新的天数
+        userInfo.registrationDays = days;
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+    
+        // ✅ 只有当 `profile-days` 存在时才更新
+    updateElementText('profile-days', days);
+      }
     }
-  }
-}
 
 async function refreshBeta() {
   const storedUser = JSON.parse(localStorage.getItem('userInfo'));
@@ -1338,17 +1361,20 @@ async function refreshBeta() {
     const response = await fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/user/${storedUser.id}`);
     if (response.success) {
       const updatedUser = response.data;
-      // 更新 localStorage 中的用户数据
+      // ✅ 确保 `registrationDays` 也被更新
+      const registrationDate = new Date(updatedUser.createdAt);
+      const now = new Date();
+      updatedUser.registrationDays = Math.floor((now - registrationDate) / (1000 * 60 * 60 * 24));
+
+      // ✅ 更新 localStorage 并触发 UI 更新
       localStorage.setItem('userInfo', JSON.stringify(updatedUser));
-      // 更新页面 beta 显示（这里假设你的页面元素 id 为 'profile-beta'）
-      document.getElementById('profile-beta').textContent = updatedUser.beta || 0;
+      updateElementText('profile-beta', updatedUser.beta || 0);
+      updateRegistrationDays();
     }
   } catch (error) {
-    console.error("刷新 beta 值出错:", error);
+    console.error("❌ 刷新 beta 值出错:", error);
   }
 }
-
-
 
 
     function openEditProfile() {
@@ -1491,14 +1517,14 @@ async function refreshBeta() {
     const avatarFile = document.getElementById('edit-avatar').files[0];
     if (avatarFile) {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']; // 允许的文件类型
-      const maxSize = 2 * 1024 * 1024; // 最大 2MB
+      const maxSize = 5 * 1024 * 1024; // 最大 5MB
       if (!allowedTypes.includes(avatarFile.type)) {
   alert(`文件格式无效，当前格式: ${avatarFile.type}。仅支持 JPG, PNG 或 GIF`);
   return;
 }
 
 if (avatarFile.size > maxSize) {
-  alert(`文件大小不能超过 2MB。当前文件大小: ${(avatarFile.size / 1024 / 1024).toFixed(2)}MB`);
+  alert(`文件大小不能超过 5MB。当前文件大小: ${(avatarFile.size / 1024 / 1024).toFixed(2)}MB`);
   return;
 }
       const formData = new FormData();
