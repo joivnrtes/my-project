@@ -59,12 +59,15 @@ function connectWS() {
     console.log("📩 收到新消息:", message);
     
     if (message.senderId !== getCurrentUserId()) {
+      console.log(`🔴 触发未读消息红点，发送者ID: ${message.senderId}`);
       const chatBtn = document.querySelector(`.chat-btn[data-friend-id="${message.senderId}"]`);
       if (chatBtn) {
         const unreadBadge = chatBtn.querySelector("span");
         if (unreadBadge) {
           unreadBadge.style.display = "block"; // ✅ 显示红点
         }
+        } else {
+          console.error("❌ 未找到聊天按钮，可能是 DOM 加载顺序问题");
       }
     }
   });

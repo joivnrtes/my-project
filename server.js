@@ -175,8 +175,10 @@ io.on('connection', (socket) => {
             await chatMessage.save();
 
             if (onlineUsers.has(data.to)) {
+                console.log(`✅ 发送 newMessage 事件给用户: ${data.to}`);
                 onlineUsers.get(data.to).emit("message", { from: userId, message: data.message });
             } else {
+                console.log(`📪 用户 ${data.to} 不在线，消息存入 Redis`);
                 if (redisClient) {
                     await redisClient.lPush(`offline_messages:${data.to}`, JSON.stringify({ from: userId, message: data.message }));
                 }

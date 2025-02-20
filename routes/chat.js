@@ -17,7 +17,7 @@ module.exports = function (io) {
     }
   };
 
-  router.post("/read-messages/:friendId", authenticate, async (req, res) => {
+  router.post("/read-messages/:friendId", async (req, res) => {
     try {
       const userId = req.user.id; // 确保用户已登录
       const friendId = req.params.friendId;
