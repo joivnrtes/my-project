@@ -1311,29 +1311,48 @@ function deleteChatHistory() {
 
   if (!confirm('确定删除该好友的所有聊天记录？')) return;
 
-  fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?friendId=${currentChatUser}`, {
-    method: 'DELETE'
-  })
-    .then(data => {
-      if (data.success) {
-        alert('聊天记录已删除');
-        document.getElementById('chat-messages').innerHTML = '';
-        sendWSMessage({ type: 'delete_chat', to: currentChatUser });
+  // ✅ 1. 获取聊天窗口（防止 `null` 报错）
+  const chatContainer = document.getElementById('chat-messages');
+  if (chatContainer) {
+    chatContainer.innerHTML = ''; // 只清空前端聊天
+  }
 
-        // ✅ 退出聊天界面，返回好友列表
-        returnToFriendList();
-      } else {
-        alert('删除聊天记录失败');
-      }
-    })
-    .catch(err => console.error('删除聊天记录异常:', err));
+  // ✅ 2. 发送 WebSocket 消息（通知对方或更新前端状态）
+  sendWSMessage({ type: 'delete_chat', to: currentChatUser });
+
+  // ✅ 3. 仅当 `currentChatUser` 存在时才存入 `localStorage`
+  if (currentChatUser) {
+    let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
+    deletedChats[currentChatUser] = true;
+    localStorage.setItem("deletedChats", JSON.stringify(deletedChats));
+  }
+
+  // ✅ 4. 退出聊天界面，返回好友列表
+  returnToFriendList();
 }
 
 
+function renderChatHistory(messages) {
+  const chatContainer = document.getElementById("chat-messages");
+  if (!chatContainer) return; // ✅ 防止 `null` 报错
 
+  chatContainer.innerHTML = "";
 
+  // ✅ 读取已删除的聊天记录（确保 `currentChatUser` 不是 `null`）
+  let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
+  if (currentChatUser && deletedChats[currentChatUser]) {
+    console.log("🚀 该好友的聊天记录已删除，仅前端隐藏");
+    return; // 直接返回，不渲染聊天记录
+  }
 
-   
+  messages.forEach(message => {
+    const msgDiv = document.createElement("div");
+    msgDiv.classList.add("message");
+    msgDiv.textContent = message.message;
+    chatContainer.appendChild(msgDiv);
+  });
+}
+
     // ========== 编辑资料弹窗 ==========
     const overlay = document.getElementById('edit-profile-overlay');
 
