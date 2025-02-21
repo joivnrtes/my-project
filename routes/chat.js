@@ -117,23 +117,7 @@ module.exports = function (io) {
   }
 });
 
-  // ✅ 删除聊天记录
-  router.delete("/history", authenticate, async (req, res) => {
-    try {
-      const { friendId } = req.query;
-      const userId = req.user.id;
 
-      if (!friendId) {
-        return res.status(400).json({ success: false, message: "好友 ID 不能为空" });
-      }
-
-      const deleted = await Chat.deleteMany({ $or: [{ from: userId, to: friendId }, { from: friendId, to: userId }] });
-
-      return res.json({ success: true, message: "聊天记录已删除" });
-    } catch (err) {
-      return res.status(500).json({ success: false, message: "删除聊天记录失败" });
-    }
-  });
 
   return router;
 };
