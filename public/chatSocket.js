@@ -98,28 +98,31 @@ function listenForMessages() {
     socket.off("newMessage"); // ✅ 先移除已有监听器，防止重复绑定
     socket.on("newMessage", (message) => {
         console.log("📩 收到新消息:", message);
-
+    
         if (!message || !message.from) {
             console.warn("⚠️ 收到的消息无效:", message);
             return;
         }
-
+    
         const senderId = message.from.toString().trim();
-
+    
+        // ✅ 立即更新小红点
+        console.log("🔍 查找按钮:", `button[data-friend-id='${senderId}']`);
         const chatBtn = document.querySelector(`button[data-friend-id='${senderId}']`);
         if (chatBtn) {
             const unreadBadge = chatBtn.querySelector(".unread-badge");
             if (unreadBadge) {
-                console.log("🔴 显示小红点");
-                unreadBadge.style.display = "block";
+                console.log("🔴 直接显示小红点");
+                unreadBadge.style.display = "block"; // ✅ 立刻显示小红点
             }
         } else {
             console.warn(`⚠️ 未找到按钮: button[data-friend-id='${senderId}']`);
         }
-
+    
+        // ✅ 仍然调用 `updateUnreadCount()`，确保数据同步
         updateUnreadCount();
     });
-}
+}    
 
 // ✅ WebSocket 发送消息的函数
 async function sendWSMessage(to, message) {
@@ -231,4 +234,7 @@ window.connectWS = connectWS;
 window.sendWSMessage = sendWSMessage;
 
 // ✅ 页面加载时自动连接 WebSocket
-window.onload = connectWS;
+window.onload = () => {
+    connectWS();
+    updateUnreadCount(); // ✅ 页面加载时获取未读消息数量
+};
