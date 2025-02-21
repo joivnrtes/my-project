@@ -132,6 +132,36 @@ module.exports = function (io) {
     }
   });
 
+// ✅ 获取未读消息数量
+router.get("/unread-count", authenticate, async (req, res) => {
+  try {
+      console.log("🔍 获取未读消息数量");
+
+      const userId = req.user.id;
+
+      // ✅ 统计未读消息数量
+      const unreadCounts = await Chat.aggregate([
+          { $match: { to: new mongoose.Types.ObjectId(userId), isRead: false } }, // 只查询 `to` 是当前用户的未读消息
+          { $group: { _id: "$from", count: { $sum: 1 } } } // 按 `from` 统计未读数量
+      ]);
+
+      // ✅ 生成 { friendId: unreadCount } 格式
+      let countMap = {};
+      unreadCounts.forEach((item) => {
+          countMap[item._id.toString()] = item.count;
+      });
+
+      console.log("✅ 返回未读消息数量:", countMap);
+
+      return res.json({ success: true, unreadCounts: countMap });
+
+  } catch (error) {
+      console.error("❌ 获取未读消息失败:", error);
+      return res.status(500).json({ success: false, message: "服务器错误", error: error.message });
+  }
+});
+
+
   // ✅ 获取聊天记录
   router.get("/history", authenticate, async (req, res) => {
     try {
