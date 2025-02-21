@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // 读取环境变量
-const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myLocalDB';
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb+srv://a2487612091:tjGqBuj2z42X0Bvz@myvercelcluster.f7zii.mongodb.net/mydatabase?retryWrites=true&w=majority&appName=MyVercelCluster';
 
 const connectDB = async () => {
   try {
