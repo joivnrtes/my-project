@@ -155,7 +155,11 @@ io.on('connection', (socket) => {
         return;
     }
 
-    onlineUsers.set(userId, socket);
+    if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId).add(socket);
+
     console.log(`✅ WebSocket: 用户 ${userId} 连接成功`);
 
     socket.on("enter_chat", ({ to }) => {
@@ -164,37 +168,48 @@ io.on('connection', (socket) => {
         socket.emit("entered_chat", { success: true, chatWith: to });
       });
       
-      socket.on("message", async (data, callback) => {
+      socket.on("newMessage", async (data, callback) => {
         try {
             if (!data || !data.to || !data.message) {
                 return callback({ success: false, error: "消息格式错误" });
             }
+    
             console.log(`📩 ${userId} 发送消息给 ${data.to}: ${data.message}`);
     
             const chatMessage = new Chat({ from: userId, to: data.to, message: data.message });
             await chatMessage.save();
+            console.log(`✅ 消息存储成功: ${data.message}`);
     
-            if (onlineUsers.has(data.to)) {
-                console.log(`✅ 发送 newMessage 事件给用户: ${data.to}`);
-                onlineUsers.get(data.to).emit("newMessage", { senderId: userId, message: data.message, isRead: false });
-            } else {
-                console.log(`📪 用户 ${data.to} 不在线，消息存入 Redis`);
-                if (redisClient) {
-                    await redisClient.lPush(`offline_messages:${data.to}`, JSON.stringify({ senderId: userId, message: data.message, isRead: false }));
-                }
-            }
+            // ✅ 发送消息给在线用户
+            const receiverSockets = onlineUsers.get(data.to);
+            if (receiverSockets && receiverSockets.size > 0) {
+    console.log(`✅ WebSocket 发送 newMessage 事件给用户: ${data.to}`);
+    receiverSockets.forEach(socket => {
+        socket.emit("newMessage", { senderId: userId, message: data.message, isRead: false });
+    });
+} else {
+    console.log(`📪 用户 ${data.to} 不在线，消息存入 Redis`);
+    if (redisClient) {
+        await redisClient.lPush(`offline_messages:${data.to}`, JSON.stringify({ senderId: userId, message: data.message, isRead: false }));
+    }
+}
             return callback({ success: true });
         } catch (err) {
+            console.error("🔥 消息存储失败:", err);
             return callback({ success: false, error: err.message });
         }
     });
-    
     socket.on("disconnect", () => {
-        onlineUsers.delete(userId);
+        const sockets = onlineUsers.get(userId);
+        if (sockets) {
+            sockets.delete(socket);
+            if (sockets.size === 0) {
+                onlineUsers.delete(userId);
+            }
+        }
         console.log(`🔴 用户 ${userId || "未知"} 断开连接`);
     });
-});
-
+})
 // ✅ 监听 Render 分配的 `PORT`
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
@@ -203,6 +218,6 @@ server.listen(PORT, () => {
 
 console.log("=== LOADED server.js ===");
 
-module.exports.io = io;
-module.exports = { redisClient };
+module.exports = { io, redisClient, onlineUsers };
+
 
