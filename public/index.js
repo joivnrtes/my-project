@@ -1201,31 +1201,35 @@ function getCurrentUserId() {
 
       const currentUserId = getCurrentUserId();
 
-      // ✅ 加载历史聊天记录，确保不重复渲染
-      fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?friendId=${friendId}`)
-        .then(data => {
-          if (!data.success) {
-            alert('获取聊天记录失败');
-            return;
-          }
-    
-          const existingMessages = new Set();
-          Array.from(chatMessagesEl.children).forEach(msg => existingMessages.add(msg.dataset.id));
+// ✅ 加载历史聊天记录，确保不重复渲染
+fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?friendId=${friendId}`)
+  .then(data => {
+    if (!data.success) {
+      alert('获取聊天记录失败');
+      return;
+    }
 
-          data.chats.forEach(chat => {
-            const bubbleType = (chat.from._id.toString() === currentUserId) ? 'me' : 'friend';
+    // ✅ 读取已删除的聊天记录（localStorage 存储的）
+    let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
+    let deletedMessages = deletedChats[friendId] || []; // 获取当前聊天对象的已删除消息 ID 列表
 
-            if (!existingMessages.has(chat._id)) {
-              const bubble = createBubble(chat.message, bubbleType, chat.timestamp);
-              bubble.dataset.id = chat._id; // ✅ 绑定唯一 ID，防止重复
-              chatMessagesEl.appendChild(bubble);
-            }
-          });
+    const existingMessages = new Set();
+    Array.from(chatMessagesEl.children).forEach(msg => existingMessages.add(msg.dataset.id));
 
-    
-          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-        })
-        .catch(err => console.error('获取聊天记录失败:', err));
+    data.chats.forEach(chat => {
+      const bubbleType = (chat.from._id.toString() === currentUserId) ? 'me' : 'friend';
+
+      // ✅ 过滤掉已删除的消息
+      if (!existingMessages.has(chat._id) && !deletedMessages.includes(chat._id)) {
+        const bubble = createBubble(chat.message, bubbleType, chat.timestamp);
+        bubble.dataset.id = chat._id; // ✅ 绑定唯一 ID，防止重复
+        chatMessagesEl.appendChild(bubble);
+      }
+    });
+
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  })
+  .catch(err => console.error('获取聊天记录失败:', err));
     }
     
     function returnToFriendList() {
@@ -1311,23 +1315,22 @@ function deleteChatHistory() {
 
   if (!confirm('确定删除该好友的所有聊天记录？')) return;
 
-  // ✅ 1. 获取聊天窗口（防止 `null` 报错）
-  const chatContainer = document.getElementById('chat-messages');
-  if (chatContainer) {
-    chatContainer.innerHTML = ''; // 只清空前端聊天
-  }
+  // ✅ 1. 获取所有消息 ID
+  let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
+  let deletedMessages = Array.from(document.querySelectorAll("#chat-messages .message"))
+    .map(msg => msg.dataset.id); // 获取所有消息的 ID
 
-  // ✅ 2. 发送 WebSocket 消息（通知对方或更新前端状态）
+  // ✅ 2. 存入 `localStorage`
+  deletedChats[currentChatUser] = deletedMessages;
+  localStorage.setItem("deletedChats", JSON.stringify(deletedChats));
+
+  // ✅ 3. 仅从前端 UI 移除消息
+  document.getElementById('chat-messages').innerHTML = '';
+
+  // ✅ 4. 发送 WebSocket 消息（可选，用于通知对方）
   sendWSMessage({ type: 'delete_chat', to: currentChatUser });
 
-  // ✅ 3. 仅当 `currentChatUser` 存在时才存入 `localStorage`
-  if (currentChatUser) {
-    let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
-    deletedChats[currentChatUser] = true;
-    localStorage.setItem("deletedChats", JSON.stringify(deletedChats));
-  }
-
-  // ✅ 4. 退出聊天界面，返回好友列表
+  // ✅ 5. 退出聊天界面，返回好友列表
   returnToFriendList();
 }
 
