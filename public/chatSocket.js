@@ -95,11 +95,7 @@ function listenForMessages() {
         return;
     }
 
-    if (socket.hasListeners("newMessage")) {
-        console.log("⚠️ 已经监听 newMessage，跳过重复监听");
-        return;
-    }
-
+    socket.off("newMessage"); // ✅ 先移除已有监听器，防止重复绑定
     socket.on("newMessage", (message) => {
         console.log("📩 收到新消息:", message);
 
@@ -126,28 +122,24 @@ function listenForMessages() {
 }
 
 // ✅ WebSocket 发送消息的函数
-function sendWSMessage(data) {
-    if (!socket || !socket.connected) {
-        console.warn("[WS] WebSocket 未连接，消息暂存到队列中...");
-        
-        if (!messageQueue.find(msg => msg.id === data.id)) {
-            messageQueue.push(data);
+async function sendWSMessage(to, message) {
+    try {
+        const response = await fetchWithAuth("https://websocket-server-o0o0.onrender.com/api/chat/send", { 
+            method: "POST",
+            body: JSON.stringify({ to, message })
+        });
+
+        if (!response || !response.success) {
+            console.error("❌ 发送消息失败:", response ? response.message : "未知错误");
+            return;
         }
 
-        connectWS();
-        return;
+        console.log("✅ 消息发送成功:", response);
+    } catch (err) {
+        console.error("❌ 发送消息失败:", err);
     }
-
-    socket.emit("message", data, (ack) => {
-        if (ack && ack.success) {
-            console.log("✅ 消息成功发送:", data);
-        } else {
-            console.error("❌ 消息发送失败:", ack);
-        }
-    });
-
-    console.log("📩 发送 WebSocket 消息:", data);
 }
+
 
 // ✅ 监听页面刷新，防止 WebSocket 连接泄漏
 window.addEventListener("beforeunload", () => {
@@ -166,24 +158,18 @@ async function markMessagesAsRead(friendId) {
             return;
         }
 
-        const res = await fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/read-messages/${friendId}`, { 
+        const response = await fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/read-messages/${friendId}`, { 
             method: "POST" 
         });
 
-        if (!res) {
-            console.error("❌ fetchWithAuth() 返回 null，API 请求失败");
+        if (!response) {
+            console.error("❌ API 返回 `undefined`，可能请求失败");
             return;
         }
 
-        if (!res.ok) {
-            console.error(`❌ 标记消息失败: HTTP ${res.status} - ${res.statusText}`);
-            const errorText = await res.text();
-            console.error("📌 服务器返回错误:", errorText);
-            return;
-        }
-
-        const response = await res.json(); // ✅ 这里手动解析 JSON
-        if (response.success) {
+        if (!response.success) {
+            console.warn("⚠️ 服务器未能标记消息为已读:", response.message || "未知错误");
+        } else {
             console.log("✅ 消息已成功标记为已读");
 
             // ✅ 立即隐藏小红点
@@ -191,41 +177,42 @@ async function markMessagesAsRead(friendId) {
             if (chatBtn) {
                 const unreadBadge = chatBtn.querySelector(".unread-badge");
                 if (unreadBadge) {
+                    console.log("🔴 隐藏小红点");
                     unreadBadge.style.display = "none";
                 }
             }
 
+            // ✅ 更新未读消息计数
             updateUnreadCount();
-        } else {
-            console.warn("⚠️ 服务器返回 success 为 false:", response.message);
         }
     } catch (err) {
         console.error("❌ 标记消息为已读失败:", err);
     }
 }
 
+
 async function updateUnreadCount() {
     try {
-        const res = await fetchWithAuth("https://websocket-server-o0o0.onrender.com/api/chat/unread-count");
+        const response = await fetchWithAuth("https://websocket-server-o0o0.onrender.com/api/chat/unread-count");
 
-        if (!res || !res.ok) {
-            console.error("❌ 获取未读消息失败: HTTP", res ? res.status : "无效响应");
+        if (!response) {
+            console.error("❌ API 返回 `undefined`，可能请求失败");
             return;
         }
 
-        const response = await res.json();
         if (!response.success || !response.unreadCounts) {
             console.error("⚠️ 服务器返回未读消息错误:", response);
             return;
         }
 
         console.log("🔄 更新未读消息数量:", response.unreadCounts);
+
         document.querySelectorAll(".chat-btn").forEach(btn => {
             const friendId = btn.dataset.friendId.trim();
             const unreadBadge = btn.querySelector(".unread-badge");
 
-            if (response.unreadCounts[friendId] && response.unreadCounts[friendId] > 0) {
-                console.log(`🔴 显示未读消息（${response.unreadCounts[friendId]}）: `, friendId);
+            if (response.unreadCounts.hasOwnProperty(friendId) && response.unreadCounts[friendId] > 0) {
+                console.log(`🔴 显示未读消息 (${response.unreadCounts[friendId]}):`, friendId);
                 unreadBadge.style.display = "block";
             } else {
                 unreadBadge.style.display = "none";
@@ -235,6 +222,8 @@ async function updateUnreadCount() {
         console.error("❌ 获取未读消息数量失败:", err);
     }
 }
+
+
 
 // ✅ 让 `markMessagesAsRead` 变成全局可用的函数
 window.markMessagesAsRead = markMessagesAsRead;
