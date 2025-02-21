@@ -1014,13 +1014,16 @@ if (!userId) {
   // 创建第二个 div，用于放置按钮
   const btnDiv = document.createElement('div');
 
-  // 创建“聊天”按钮
+  // ✅ 创建聊天按钮
 const chatBtn = document.createElement('button');
 chatBtn.textContent = '聊天';
-chatBtn.style.position = 'relative'; // ✅ 让红点能正确定位
+chatBtn.classList.add("chat-btn"); // ✅ 添加类名，方便查找
+chatBtn.dataset.friendId = friend._id; // ✅ 绑定好友 ID
+chatBtn.style.position = 'relative'; 
 
-// 创建红点（默认隐藏）
+// ✅ 创建小红点
 const unreadBadge = document.createElement('span');
+unreadBadge.classList.add("unread-badge"); // ✅ 确保类名正确
 unreadBadge.style.display = 'none'; // 默认隐藏
 unreadBadge.style.position = 'absolute';
 unreadBadge.style.top = '5px';
@@ -1209,9 +1212,11 @@ fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?frien
       return;
     }
 
-    // ✅ 读取已删除的聊天记录（localStorage 存储的）
+    // ✅ 读取 localStorage 里的已删除消息
     let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
     let deletedMessages = deletedChats[friendId] || []; // 获取当前聊天对象的已删除消息 ID 列表
+
+    console.log("📂 加载聊天记录, 删除的消息 ID:", deletedMessages);
 
     const existingMessages = new Set();
     Array.from(chatMessagesEl.children).forEach(msg => existingMessages.add(msg.dataset.id));
@@ -1230,6 +1235,7 @@ fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?frien
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   })
   .catch(err => console.error('获取聊天记录失败:', err));
+
     }
     
     function returnToFriendList() {
@@ -1237,74 +1243,80 @@ fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?frien
       document.getElementById('friend-list-container').style.display = 'block';
     }
 
-    function createBubble(text, type, timestamp) {
-  const bubble = document.createElement('div');
-  bubble.classList.add('chat-bubble', type);
-  
-  // 检查 timestamp 是否有效
-  const dateObj = timestamp ? new Date(timestamp) : new Date();
-  const timeEl = document.createElement('div');
-  timeEl.classList.add('timestamp');
-  
-  // 如果 dateObj 无效，则不显示时间，或设置为默认值
-  if (isNaN(dateObj.getTime())) {
-    timeEl.textContent = "";
-  } else {
-    timeEl.textContent = dateObj.toLocaleTimeString();
-  }
-  
-  bubble.textContent = text;
-  bubble.appendChild(timeEl);
-  return bubble;
-}
-
-
+    function createBubble(text, type, timestamp, msgId) {
+      const bubble = document.createElement('div');
+      bubble.classList.add('chat-bubble', type);
+    
+      if (msgId) {
+        bubble.dataset.id = msgId; // ✅ 绑定消息 ID
+      } else {
+        console.warn("⚠️ 缺少消息 ID，删除功能可能无法正常工作:", text);
+      }
+    
+      // 处理时间戳
+      const dateObj = timestamp ? new Date(timestamp) : new Date();
+      const timeEl = document.createElement('div');
+      timeEl.classList.add('timestamp');
+      timeEl.textContent = isNaN(dateObj.getTime()) ? "" : dateObj.toLocaleTimeString();
+    
+      bubble.textContent = text;
+      bubble.appendChild(timeEl);
+      
+      return bubble;
+    }
+    
+    
 
     function sendMessage() {
-  const chatInputEl = document.getElementById('chat-input');
-  const chatMessagesEl = document.getElementById('chat-messages');
-  const message = chatInputEl.value.trim();
-  const fromUserId = getCurrentUserId();
-if (!fromUserId) {
-    alert("用户未登录或信息丢失，请重新登录");
-    return;
-}
-
-  if (!message) {
-    alert('请输入消息内容');
-    return;
-  }
-
-  if (!currentChatUser) {
-    alert('请选择聊天对象');
-    return;
-  }
-
-  const myMsg = createBubble(message, 'me');
-  chatMessagesEl.appendChild(myMsg);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-
- // 立即通过 WebSocket 发送
- sendWSMessage({ type: "message", to: currentChatUser, message });
-
- // 发送消息到服务器
-  fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/chat/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({  
-      to: currentChatUser, 
-      message 
-    })
-  })
-  .then(data => {
-    if (!data.success) {
-      alert('消息存储失败');
+      const chatInputEl = document.getElementById('chat-input');
+      const chatMessagesEl = document.getElementById('chat-messages');
+      const message = chatInputEl.value.trim();
+      const fromUserId = getCurrentUserId();
+      
+      if (!fromUserId) {
+        alert("用户未登录或信息丢失，请重新登录");
+        return;
+      }
+    
+      if (!message) {
+        alert('请输入消息内容');
+        return;
+      }
+    
+      if (!currentChatUser) {
+        alert('请选择聊天对象');
+        return;
+      }
+    
+      // ✅ 生成临时 ID（前端先显示，后端存储后更新）
+      const tempMsgId = "msg_" + Date.now(); 
+    
+      const myMsg = createBubble(message, 'me', new Date(), tempMsgId);
+      chatMessagesEl.appendChild(myMsg);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    
+      // ✅ 发送 WebSocket 消息
+      sendWSMessage({ type: "message", to: currentChatUser, message });
+    
+      // ✅ 发送消息到服务器
+      fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: currentChatUser, message })
+      })
+      .then(data => {
+        if (data.success) {
+          // ✅ 服务器返回真正的 `msgId`，更新前端 `dataset.id`
+          myMsg.dataset.id = data.chat._id;
+        } else {
+          alert('消息存储失败');
+        }
+      })
+      .catch(err => console.error('消息存储失败:', err));
+    
+      chatInputEl.value = '';
     }
-  })
-  .catch(err => console.error('消息存储失败:', err));
-
-  chatInputEl.value = '';
-}
+    
 
 
 function deleteChatHistory() {
@@ -1315,19 +1327,24 @@ function deleteChatHistory() {
 
   if (!confirm('确定删除该好友的所有聊天记录？')) return;
 
-  // ✅ 1. 获取所有消息 ID
+  // ✅ 1. 获取所有消息 ID（修正选择器 `.chat-bubble`）
   let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
-  let deletedMessages = Array.from(document.querySelectorAll("#chat-messages .message"))
-    .map(msg => msg.dataset.id); // 获取所有消息的 ID
+  let deletedMessages = Array.from(document.querySelectorAll("#chat-messages .chat-bubble"))
+    .map(msg => msg.dataset.id)
+    .filter(id => id); // ✅ 过滤掉 `undefined` 值
+
+  console.log("🗑 删除的消息 ID:", deletedMessages);
 
   // ✅ 2. 存入 `localStorage`
   deletedChats[currentChatUser] = deletedMessages;
   localStorage.setItem("deletedChats", JSON.stringify(deletedChats));
 
+  console.log("✅ 存入 localStorage: ", JSON.stringify(deletedChats));
+
   // ✅ 3. 仅从前端 UI 移除消息
   document.getElementById('chat-messages').innerHTML = '';
 
-  // ✅ 4. 发送 WebSocket 消息（可选，用于通知对方）
+  // ✅ 4. 发送 WebSocket 消息（可选）
   sendWSMessage({ type: 'delete_chat', to: currentChatUser });
 
   // ✅ 5. 退出聊天界面，返回好友列表
@@ -1343,16 +1360,25 @@ function renderChatHistory(messages) {
 
   // ✅ 读取已删除的聊天记录（确保 `currentChatUser` 不是 `null`）
   let deletedChats = JSON.parse(localStorage.getItem("deletedChats")) || {};
-  if (currentChatUser && deletedChats[currentChatUser]) {
-    console.log("🚀 该好友的聊天记录已删除，仅前端隐藏");
-    return; // 直接返回，不渲染聊天记录
-  }
+  let deletedMessages = deletedChats[currentChatUser] || [];
+
+  console.log("🚀 该好友的聊天记录已删除，仅前端隐藏:", deletedMessages);
 
   messages.forEach(message => {
-    const msgDiv = document.createElement("div");
-    msgDiv.classList.add("message");
-    msgDiv.textContent = message.message;
-    chatContainer.appendChild(msgDiv);
+    if (!message._id) {
+      console.warn("⚠️ 服务器返回的消息没有 ID:", message);
+      return;
+    }
+
+    // ✅ 过滤掉已删除的消息
+    if (deletedMessages.includes(message._id)) {
+      console.log("🚫 跳过已删除的消息:", message._id);
+      return;
+    }
+
+    const bubbleType = message.from._id.toString() === getCurrentUserId() ? 'me' : 'friend';
+    const bubble = createBubble(message.message, bubbleType, message.timestamp, message._id);
+    chatContainer.appendChild(bubble);
   });
 }
 

@@ -57,20 +57,36 @@ function connectWS() {
   // ✅ 监听 WebSocket 收到新消息时显示红点
   socket.on("newMessage", (message) => {
     console.log("📩 收到新消息:", message);
-    
+  
+    if (!message || !message.senderId) {
+      console.warn("⚠️ 收到的消息格式不正确:", message);
+      return;
+    }
+  
     if (message.senderId !== getCurrentUserId()) {
       console.log(`🔴 触发未读消息红点，发送者ID: ${message.senderId}`);
-      const chatBtn = document.querySelector(`.chat-btn[data-friend-id="${message.senderId}"]`);
-      if (chatBtn) {
-        const unreadBadge = chatBtn.querySelector("span");
-        if (unreadBadge) {
-          unreadBadge.style.display = "block"; // ✅ 显示红点
+  
+      setTimeout(() => {
+        const chatBtn = document.querySelector(`.chat-btn[data-friend-id="${message.senderId}"]`);
+        if (!chatBtn) {
+          console.warn("❌ 没有找到聊天按钮，可能是 DOM 还未加载");
+          return;
         }
-        } else {
-          console.error("❌ 未找到聊天按钮，可能是 DOM 加载顺序问题");
-      }
+  
+        let unreadBadge = chatBtn.querySelector(".unread-badge");
+        if (!unreadBadge) {
+          console.warn("❌ 没有找到 .unread-badge，尝试创建");
+          unreadBadge = document.createElement("span");
+          unreadBadge.classList.add("unread-badge");
+          unreadBadge.style.cssText = "display: none; width: 10px; height: 10px; background: red; border-radius: 50%; position: absolute; top: 5px; right: 5px;";
+          chatBtn.appendChild(unreadBadge);
+        }
+  
+        unreadBadge.style.display = "block"; // ✅ 显示小红点
+      }, 500);
     }
   });
+  
   
 
   socket.on("disconnect", (reason) => {
