@@ -26,15 +26,17 @@ async function fetchWithAuth(url, options = {}) {
       } else {
         console.error('❌ Token 刷新失败，跳转到登录页');
         logoutUser();
+        return null;
       }
     }
 
-    return response.json();
+    return response; // ✅ 返回完整 Response，而不是 `response.json()`
   } catch (err) {
     console.error('❌ fetchWithAuth 请求失败:', err);
-    throw err;
+    return null;
   }
 }
+
 
 // 2️⃣ 尝试刷新 Token
 async function attemptRefreshToken() {

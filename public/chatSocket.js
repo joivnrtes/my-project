@@ -171,18 +171,31 @@ async function markMessagesAsRead(friendId) {
         });
 
         if (!res) {
-            console.error("❌ fetchWithAuth() 返回 undefined，API 请求失败");
+            console.error("❌ fetchWithAuth() 返回 null，API 请求失败");
             return;
         }
 
         if (!res.ok) {
             console.error(`❌ 标记消息失败: HTTP ${res.status} - ${res.statusText}`);
+            const errorText = await res.text();
+            console.error("📌 服务器返回错误:", errorText);
             return;
         }
 
-        const response = await res.json();
+        const response = await res.json(); // ✅ 这里手动解析 JSON
         if (response.success) {
             console.log("✅ 消息已成功标记为已读");
+
+            // ✅ 立即隐藏小红点
+            const chatBtn = document.querySelector(`button[data-friend-id='${friendId}']`);
+            if (chatBtn) {
+                const unreadBadge = chatBtn.querySelector(".unread-badge");
+                if (unreadBadge) {
+                    unreadBadge.style.display = "none";
+                }
+            }
+
+            updateUnreadCount();
         } else {
             console.warn("⚠️ 服务器返回 success 为 false:", response.message);
         }
@@ -190,7 +203,6 @@ async function markMessagesAsRead(friendId) {
         console.error("❌ 标记消息为已读失败:", err);
     }
 }
-
 
 async function updateUnreadCount() {
     try {
