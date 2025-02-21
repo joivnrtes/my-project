@@ -53,9 +53,10 @@ module.exports = function (io) {
   
       // ✅ 更新未读消息
       const result = await Chat.updateMany(
-        { senderId: friendObjectId, receiverId: userId, isRead: false },
+        { from: friendId, to: userId, isRead: false },  // ✅ 确保 from/to 正确
         { $set: { isRead: true } }
       );
+      
   
       console.log("✅ 数据库更新结果:", result);
   
@@ -75,22 +76,32 @@ module.exports = function (io) {
     try {
       const from = req.user.id;
       const { to, message } = req.body;
-
+  
       if (!to || !message) {
         return res.status(400).json({ error: "缺少必要参数" });
       }
-
-      const chatMessage = new Chat({ from, to, message });
+  
+      const chatMessage = new Chat({ from, to, message, isRead: false });
       await chatMessage.save();
-
-      sendMessageToUser(to, { from, message, timestamp: new Date().toISOString() });
-
+  
+      console.log(`📩 服务器发送新消息: ${message} 给 ${to}`);
+  
+      // ✅ 获取接收方的 socket ID
+      const receiverSocketId = users.get(to);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newMessage", { senderId: from, message, isRead: false });
+        console.log(`✅ WebSocket 发送消息成功, 目标 socket ID: ${receiverSocketId}`);
+      } else {
+        console.warn(`❌ 用户 ${to} 未在线, 无法发送 WebSocket 消息`);
+      }
+  
       return res.json({ success: true, chat: chatMessage });
     } catch (err) {
       console.error("🔥 消息存储失败:", err);
       return res.status(500).json({ success: false, message: "消息发送失败", error: err.message });
     }
   });
+  
 
  // ✅ 获取聊天记录
  router.get("/history", authenticate, async (req, res) => {

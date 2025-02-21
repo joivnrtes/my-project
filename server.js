@@ -170,17 +170,17 @@ io.on('connection', (socket) => {
                 return callback({ success: false, error: "消息格式错误" });
             }
             console.log(`📩 ${userId} 发送消息给 ${data.to}: ${data.message}`);
-
+    
             const chatMessage = new Chat({ from: userId, to: data.to, message: data.message });
             await chatMessage.save();
-
+    
             if (onlineUsers.has(data.to)) {
                 console.log(`✅ 发送 newMessage 事件给用户: ${data.to}`);
-                onlineUsers.get(data.to).emit("message", { from: userId, message: data.message });
+                onlineUsers.get(data.to).emit("newMessage", { senderId: userId, message: data.message, isRead: false });
             } else {
                 console.log(`📪 用户 ${data.to} 不在线，消息存入 Redis`);
                 if (redisClient) {
-                    await redisClient.lPush(`offline_messages:${data.to}`, JSON.stringify({ from: userId, message: data.message }));
+                    await redisClient.lPush(`offline_messages:${data.to}`, JSON.stringify({ senderId: userId, message: data.message, isRead: false }));
                 }
             }
             return callback({ success: true });
@@ -188,7 +188,7 @@ io.on('connection', (socket) => {
             return callback({ success: false, error: err.message });
         }
     });
-
+    
     socket.on("disconnect", () => {
         onlineUsers.delete(userId);
         console.log(`🔴 用户 ${userId || "未知"} 断开连接`);
