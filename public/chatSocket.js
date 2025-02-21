@@ -45,6 +45,7 @@ function connectWS() {
         reconnectTimer = null;
         reconnectAttempts = 0;
 
+        // ✅ 重新发送队列中的消息，防止消息丢失
         while (messageQueue.length > 0) {
             sendWSMessage(messageQueue.shift());
         }
@@ -89,6 +90,63 @@ function connectWS() {
     });
 }
 
-window.onload = connectWS;
+// ✅ WebSocket 发送消息的函数
+function sendWSMessage(data) {
+    if (!socket || !socket.connected) {
+        console.warn("[WS] WebSocket 未连接，消息暂存到队列中...");
+        
+        // ✅ 避免存入重复消息
+        if (!messageQueue.find(msg => msg.id === data.id)) {
+            messageQueue.push(data);
+        }
+
+        connectWS();
+        return;
+    }
+
+    socket.emit("message", data, (ack) => {
+        if (ack && ack.success) {
+            console.log("✅ 消息成功发送:", data);
+        } else {
+            console.error("❌ 消息发送失败:", ack);
+        }
+    });
+
+    console.log("📩 发送 WebSocket 消息:", data);
+}
+
+// ✅ 监听页面刷新，防止 WebSocket 连接泄漏
+window.addEventListener("beforeunload", () => {
+    if (socket) {
+        console.log("[WS] 页面刷新，关闭 WebSocket 连接...");
+        socket.disconnect();
+    }
+});
+
+async function markMessagesAsRead(friendId) {
+    try {
+        console.log(`🔵 标记 ${friendId} 的消息为已读`);
+        
+        const response = await fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/read-messages/${friendId}`, { 
+            method: "POST" 
+        });
+
+        if (!response.success) {
+            console.warn("⚠️ 服务器未能标记消息为已读:", response.message);
+        } else {
+            console.log("✅ 消息已成功标记为已读");
+        }
+    } catch (err) {
+        console.error("❌ 标记消息为已读失败:", err);
+    }
+}
+
+// ✅ 让 `markMessagesAsRead` 变成全局可用的函数
+window.markMessagesAsRead = markMessagesAsRead;
+
+// ✅ 让 `sendWSMessage` 和 `connectWS` 可在全局调用
 window.connectWS = connectWS;
 window.sendWSMessage = sendWSMessage;
+
+// ✅ 页面加载时自动连接 WebSocket
+window.onload = connectWS;

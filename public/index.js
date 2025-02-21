@@ -56,8 +56,19 @@ window.addEventListener("load", function () {
 
   const sendMessageBtn = document.getElementById("sendMessageBtn");
   if (sendMessageBtn) {
-    sendMessageBtn.addEventListener("click", sendMessage);
-  }
+    sendMessageBtn.addEventListener("click", function () {
+        const chatInputEl = document.getElementById("chat-input");
+        const message = chatInputEl ? chatInputEl.value.trim() : "";
+        const to = currentChatUser; // 假设 `currentChatUser` 是聊天对象 ID
+
+        if (!to) {
+            alert("请选择聊天对象");
+            return;
+        }
+
+        sendMessage(to, message);
+    });
+}
 
   const goToCommunityPostPageBtn = document.getElementById("goToCommunityPostPageBtn");
   if (goToCommunityPostPageBtn) {
@@ -1267,57 +1278,75 @@ fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/history?frien
     
     
 
-    function sendMessage() {
-      const chatInputEl = document.getElementById('chat-input');
-      const chatMessagesEl = document.getElementById('chat-messages');
-      const message = chatInputEl.value.trim();
+    async function sendMessage(to, message) {
+      const chatInputEl = document.getElementById("chat-input");
+      const chatMessagesEl = document.getElementById("chat-messages");
       const fromUserId = getCurrentUserId();
-      
+  
+      if (!chatInputEl) {
+          console.error("❌ `chat-input` 不存在，请检查 HTML 是否包含该元素");
+          return;
+      }
+  
+      if (!chatMessagesEl) {
+          console.error("❌ `chat-messages` 不存在，请检查 HTML 是否包含该元素");
+          return;
+      }
+  
       if (!fromUserId) {
-        alert("用户未登录或信息丢失，请重新登录");
-        return;
+          alert("用户未登录或信息丢失，请重新登录");
+          return;
       }
-    
-      if (!message) {
-        alert('请输入消息内容');
-        return;
+  
+      if (!to) {
+          alert("请选择聊天对象");
+          return;
       }
-    
-      if (!currentChatUser) {
-        alert('请选择聊天对象');
-        return;
+  
+      // ✅ 获取 message（如果外部没传，尝试从 `chat-input` 获取）
+      message = message || chatInputEl.value.trim();
+  
+      if (!message || message.trim() === "") {
+          alert("请输入消息内容");
+          return;
       }
-    
+  
+      message = message.trim(); // ✅ 去除空格，避免误输入
+  
       // ✅ 生成临时 ID（前端先显示，后端存储后更新）
-      const tempMsgId = "msg_" + Date.now(); 
-    
-      const myMsg = createBubble(message, 'me', new Date(), tempMsgId);
+      const tempMsgId = "msg_" + Date.now();
+  
+      // ✅ 创建消息气泡
+      const myMsg = createBubble(message, "me", new Date(), tempMsgId);
       chatMessagesEl.appendChild(myMsg);
       chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    
-      // ✅ 发送 WebSocket 消息
-      sendWSMessage({ type: "message", to: currentChatUser, message });
-    
-      // ✅ 发送消息到服务器
-      fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/chat/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: currentChatUser, message })
-      })
-      .then(data => {
-        if (data.success) {
-          // ✅ 服务器返回真正的 `msgId`，更新前端 `dataset.id`
-          myMsg.dataset.id = data.chat._id;
-        } else {
-          alert('消息存储失败');
-        }
-      })
-      .catch(err => console.error('消息存储失败:', err));
-    
-      chatInputEl.value = '';
-    }
-    
-
+  
+      try {
+          // ✅ 发送 WebSocket 消息（包含 `from`，避免服务器无法识别）
+          sendWSMessage({ type: "message", from: fromUserId, to, message });
+  
+          // ✅ 发送消息到服务器
+          const response = await fetchWithAuth("https://websocket-server-o0o0.onrender.com/api/chat/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ from: fromUserId, to, message })
+          });
+  
+          // ✅ 解析服务器返回数据
+          if (response && response.success) {
+              // ✅ 服务器返回 `msgId`，更新前端 `dataset.id`
+              myMsg.dataset.id = response.chat._id;
+          } else {
+              alert(`消息存储失败: ${response ? response.message : "服务器无响应"}`);
+          }
+      } catch (err) {
+          console.error("🔥 发送消息到服务器失败:", err);
+          alert("发送消息失败，请检查网络连接");
+      }
+  
+      chatInputEl.value = ""; // ✅ 清空输入框
+  }
+  
 
 function deleteChatHistory() {
   if (!currentChatUser) {
