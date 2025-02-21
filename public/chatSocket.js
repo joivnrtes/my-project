@@ -18,11 +18,6 @@ function connectWS() {
         return;
     }
 
-    if (socket && socket.connecting) {
-        console.log("[WS] WebSocket 正在连接中...");
-        return;
-    }
-
     let token = localStorage.getItem("accessToken");
     if (!token) {
         console.error("[WS] 没有找到 accessToken，无法连接 WebSocket");
@@ -49,6 +44,9 @@ function connectWS() {
         while (messageQueue.length > 0) {
             sendWSMessage(messageQueue.shift());
         }
+
+        // ✅ 确保 `newMessage` 监听只执行一次
+        listenForMessages();
     });
 
     socket.on("disconnect", (reason) => {
@@ -90,12 +88,48 @@ function connectWS() {
     });
 }
 
+// ✅ 监听 WebSocket 新消息
+function listenForMessages() {
+    if (!socket) {
+        console.error("❌ WebSocket 未初始化，无法监听消息");
+        return;
+    }
+
+    if (socket.hasListeners("newMessage")) {
+        console.log("⚠️ 已经监听 newMessage，跳过重复监听");
+        return;
+    }
+
+    socket.on("newMessage", (message) => {
+        console.log("📩 收到新消息:", message);
+
+        if (!message || !message.from) {
+            console.warn("⚠️ 收到的消息无效:", message);
+            return;
+        }
+
+        const senderId = message.from.toString().trim();
+
+        const chatBtn = document.querySelector(`button[data-friend-id='${senderId}']`);
+        if (chatBtn) {
+            const unreadBadge = chatBtn.querySelector(".unread-badge");
+            if (unreadBadge) {
+                console.log("🔴 显示小红点");
+                unreadBadge.style.display = "block";
+            }
+        } else {
+            console.warn(`⚠️ 未找到按钮: button[data-friend-id='${senderId}']`);
+        }
+
+        updateUnreadCount();
+    });
+}
+
 // ✅ WebSocket 发送消息的函数
 function sendWSMessage(data) {
     if (!socket || !socket.connected) {
         console.warn("[WS] WebSocket 未连接，消息暂存到队列中...");
         
-        // ✅ 避免存入重复消息
         if (!messageQueue.find(msg => msg.id === data.id)) {
             messageQueue.push(data);
         }
@@ -125,26 +159,73 @@ window.addEventListener("beforeunload", () => {
 
 async function markMessagesAsRead(friendId) {
     try {
-        console.log(`🔵 标记 ${friendId} 的消息为已读`);
-        
-        const response = await fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/read-messages/${friendId}`, { 
+        console.log(`🔵 正在标记 ${friendId} 的消息为已读`);
+
+        if (!friendId) {
+            console.error("❌ 无效的 friendId，无法标记消息为已读");
+            return;
+        }
+
+        const res = await fetchWithAuth(`https://websocket-server-o0o0.onrender.com/api/chat/read-messages/${friendId}`, { 
             method: "POST" 
         });
 
-        if (!response.success) {
-            console.warn("⚠️ 服务器未能标记消息为已读:", response.message);
-        } else {
+        if (!res) {
+            console.error("❌ fetchWithAuth() 返回 undefined，API 请求失败");
+            return;
+        }
+
+        if (!res.ok) {
+            console.error(`❌ 标记消息失败: HTTP ${res.status} - ${res.statusText}`);
+            return;
+        }
+
+        const response = await res.json();
+        if (response.success) {
             console.log("✅ 消息已成功标记为已读");
+        } else {
+            console.warn("⚠️ 服务器返回 success 为 false:", response.message);
         }
     } catch (err) {
         console.error("❌ 标记消息为已读失败:", err);
     }
 }
 
+
+async function updateUnreadCount() {
+    try {
+        const res = await fetchWithAuth("https://websocket-server-o0o0.onrender.com/api/chat/unread-count");
+
+        if (!res || !res.ok) {
+            console.error("❌ 获取未读消息失败: HTTP", res ? res.status : "无效响应");
+            return;
+        }
+
+        const response = await res.json();
+        if (!response.success || !response.unreadCounts) {
+            console.error("⚠️ 服务器返回未读消息错误:", response);
+            return;
+        }
+
+        console.log("🔄 更新未读消息数量:", response.unreadCounts);
+        document.querySelectorAll(".chat-btn").forEach(btn => {
+            const friendId = btn.dataset.friendId.trim();
+            const unreadBadge = btn.querySelector(".unread-badge");
+
+            if (response.unreadCounts[friendId] && response.unreadCounts[friendId] > 0) {
+                console.log(`🔴 显示未读消息（${response.unreadCounts[friendId]}）: `, friendId);
+                unreadBadge.style.display = "block";
+            } else {
+                unreadBadge.style.display = "none";
+            }
+        });
+    } catch (err) {
+        console.error("❌ 获取未读消息数量失败:", err);
+    }
+}
+
 // ✅ 让 `markMessagesAsRead` 变成全局可用的函数
 window.markMessagesAsRead = markMessagesAsRead;
-
-// ✅ 让 `sendWSMessage` 和 `connectWS` 可在全局调用
 window.connectWS = connectWS;
 window.sendWSMessage = sendWSMessage;
 
