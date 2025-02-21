@@ -81,32 +81,60 @@ module.exports = function (io) {
   // ✅ 发送消息
   router.post("/send", authenticate, async (req, res) => {
     try {
+        console.log("📩 收到新消息请求:", req.body);
+
         const from = req.user.id;
         const { to, message } = req.body;
 
         if (!to || !message) {
-            return res.status(400).json({ error: "缺少必要参数" });
+            console.warn("⚠️ 消息参数缺失:", { to, message });
+            return res.status(400).json({ success: false, message: "缺少必要参数" });
         }
 
-        console.log(`📩 服务器收到发送消息请求: from=${from}, to=${to}, message="${message}"`);
+        console.log(`💬 处理消息: from=${from}, to=${to}, message="${message}"`);
+
+        // ✅ 确保 `from` 和 `to` 是 `ObjectId`
+        if (!mongoose.Types.ObjectId.isValid(from) || !mongoose.Types.ObjectId.isValid(to)) {
+            console.error("❌ from 或 to 不是有效的 ObjectId:", { from, to });
+            return res.status(400).json({ success: false, message: "无效的用户 ID" });
+        }
+
+        const fromObjectId = mongoose.Types.ObjectId(from);
+        const toObjectId = mongoose.Types.ObjectId(to);
+
+        console.log("✅ 转换后的 ObjectId:", { from: fromObjectId, to: toObjectId });
 
         // ✅ 先检查目标用户是否存在
-        const recipientExists = await User.findById(to);
+        const recipientExists = await User.findById(toObjectId);
         if (!recipientExists) {
+            console.error(`❌ 目标用户 ${to} 不存在`);
             return res.status(404).json({ success: false, message: "目标用户不存在" });
         }
 
         // ✅ 存储消息
-        const chatMessage = new Chat({ from, to, message, isRead: false });
+        const chatMessage = new Chat({
+            from: fromObjectId,
+            to: toObjectId,
+            message,
+            isRead: false
+        });
+
         await chatMessage.save();
-        console.log(`✅ 消息存储成功: ${message}`);
+        console.log("✅ 消息存储成功:", chatMessage);
 
         // ✅ 发送 WebSocket 消息
-        await sendMessageToUser(to, { senderId: from, message, isRead: false });
+        try {
+            await sendMessageToUser(to, { senderId: from, message, isRead: false });
+            console.log("✅ WebSocket 消息发送成功");
+        } catch (wsErr) {
+            console.error("⚠️ WebSocket 发送失败:", wsErr);
+        }
 
-        return res.json({ success: true, chat: chatMessage });
+        console.log("✅ 即将返回成功 JSON");
+        return res.json({ success: true, chat: chatMessage.toObject() });
+
     } catch (err) {
-        console.error("🔥 消息存储失败:", err);
+        console.error("🔥 服务器错误:", err);
         return res.status(500).json({ success: false, message: "消息发送失败", error: err.message });
     }
 });
