@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">goat</string>
+    <string name="title_activity_main">goat</string>
+    <string name="package_name">com.onrender.websocketservero0o0</string>
+    <string name="custom_url_scheme">com.onrender.websocketservero0o0</string>
+</resources>
