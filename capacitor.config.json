@@ -1,5 +1,9 @@
 {
   "appId": "com.onrender.websocketservero0o0",
   "appName": "goat",
-  "webDir": "public"
+  "webDir": "public",
+  "server": {
+    "url": "https://websocket-server-o0o0.onrender.com",
+    "cleartext": true
+  }
 }
