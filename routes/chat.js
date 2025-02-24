@@ -139,9 +139,18 @@ router.get("/unread-count", authenticate, async (req, res) => {
 
       const userId = req.user.id;
 
+      // ✅ 先检查 userId 是否有效
+      if (!mongoose.isValidObjectId(userId)) {
+          console.error("❌ 无效的 userId:", userId);
+          return res.status(400).json({ success: false, message: "无效的用户 ID" });
+      }
+
+      // ✅ 使用和 `send` API 一样的方法，避免 `deprecated` 警告
+      const userObjectId = new mongoose.Types.ObjectId(String(userId)); // ✅ 这样不会报错
+
       // ✅ 统计未读消息数量
       const unreadCounts = await Chat.aggregate([
-          { $match: { to: new mongoose.Types.ObjectId(userId), isRead: false } }, // 只查询 `to` 是当前用户的未读消息
+          { $match: { to: userObjectId, isRead: false } }, // 只查询 `to` 是当前用户的未读消息
           { $group: { _id: "$from", count: { $sum: 1 } } } // 按 `from` 统计未读数量
       ]);
 

@@ -210,23 +210,32 @@ async function updateUnreadCount() {
 
         console.log("🔄 更新未读消息数量:", response.unreadCounts);
 
+        // ✅ 遍历所有好友按钮，更新小红点
         document.querySelectorAll(".chat-btn").forEach(btn => {
             const friendId = btn.dataset.friendId.trim();
             const unreadBadge = btn.querySelector(".unread-badge");
 
+            // ✅ 添加调试日志
+            console.log("🔍 查找按钮:", `button[data-friend-id='${friendId}']`, "未读数量:", response.unreadCounts[friendId]);
+
             if (response.unreadCounts.hasOwnProperty(friendId) && response.unreadCounts[friendId] > 0) {
-                console.log(`🔴 显示未读消息 (${response.unreadCounts[friendId]}):`, friendId);
-                unreadBadge.style.display = "block";
+                console.log("✅ 找到未读消息，尝试显示小红点:", friendId);
+
+                if (unreadBadge) {
+                    unreadBadge.style.display = "block"; // ✅ 显示小红点
+                    console.log("🔴 小红点成功显示！");
+                } else {
+                    console.warn("⚠️ 未找到小红点元素 (unread-badge)!");
+                }
             } else {
-                unreadBadge.style.display = "none";
+                console.log("✅ 没有未读消息，隐藏小红点:", friendId);
+                if (unreadBadge) unreadBadge.style.display = "none";
             }
         });
     } catch (err) {
         console.error("❌ 获取未读消息数量失败:", err);
     }
 }
-
-
 
 // ✅ 让 `markMessagesAsRead` 变成全局可用的函数
 window.markMessagesAsRead = markMessagesAsRead;
@@ -235,6 +244,14 @@ window.sendWSMessage = sendWSMessage;
 
 // ✅ 页面加载时自动连接 WebSocket
 window.onload = () => {
-    connectWS();
-    updateUnreadCount(); // ✅ 页面加载时获取未读消息数量
+    console.log("📌 页面加载完成，开始加载好友列表...");
+    
+    loadFriendList(); // ✅ 先加载好友列表
+    
+    setTimeout(() => {
+        console.log("⏳ 等待 1 秒后更新未读消息...");
+        updateUnreadCount(); // ✅ 确保好友列表加载后再执行
+    }, 1000);
+
+    connectWS(); // ✅ 确保 WebSocket 也正常连接
 };
