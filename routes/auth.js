@@ -50,7 +50,30 @@ router.post('/send-verification-code', authController.sendVerificationCode);
 router.post('/register', authController.register);
 
 // 上传头像路由
-router.post('/upload-avatar', upload.single('avatar'), authController.uploadAvatar);
+router.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
+  try {
+      if (!req.file) {
+          return res.status(400).json({ success: false, message: '未检测到头像文件' });
+      }
+
+      const avatarPath = `/uploads/${req.file.filename}`;
+      let fullUrl = `https://${req.hostname}${avatarPath}`; // 强制 HTTPS
+
+      // 更新用户头像URL
+      const user = await User.findById(req.user.id);
+      if (!user) {
+          return res.status(404).json({ success: false, message: '用户不存在' });
+      }
+      user.avatarUrl = fullUrl;
+      await user.save();
+
+      res.json({ success: true, avatarUrl: fullUrl });
+  } catch (error) {
+      console.error('上传头像错误:', error);
+      res.status(500).json({ success: false, message: '服务器内部错误' });
+  }
+});
+
 
 
 // 用户登录
