@@ -1611,9 +1611,6 @@ if (avatarFile.size > maxSize) {
 
     fetch('https://websocket-server-o0o0.onrender.com/api/auth/upload-avatar', {
       method: 'POST',
-      headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem('token')  // ✅ 确保包含 Token
-      },
       body: formData,
       signal: controller.signal,
       credentials: 'include' // ✅ 解决 CORS 问题
