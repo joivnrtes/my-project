@@ -136,9 +136,7 @@ router.post('/update-profile', authenticate, async (req, res) => {
     if (difficultylevel !== undefined) updateData.difficultylevel = difficultylevel;
     if (climbingduration !== undefined) updateData.climbingduration = climbingduration;
     if (climbingpreference !== undefined) updateData.climbingpreference = climbingpreference;
-    if (avatarUrl !== undefined) {
-      updateData.avatarUrl = avatarUrl.replace(/^http:\/\//, 'https://'); // 强制 HTTPS
-  }
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
     // 更新数据库中对应用户的资料
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
     
