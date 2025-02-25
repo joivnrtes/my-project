@@ -1565,6 +1565,11 @@ async function refreshBeta() {
       function updateProfile() {
       fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/auth/update-profile', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // 假设 token 存在 localStorage
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
       body: JSON.stringify(updatedUserInfo)
     })
     .then(data => {
@@ -1586,65 +1591,65 @@ async function refreshBeta() {
   }
   
 
-    const avatarFile = document.getElementById('edit-avatar').files[0];
-    if (avatarFile) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']; // 允许的文件类型
-      const maxSize = 5 * 1024 * 1024; // 最大 5MB
-      if (!allowedTypes.includes(avatarFile.type)) {
-  alert(`文件格式无效，当前格式: ${avatarFile.type}。仅支持 JPG, PNG 或 GIF`);
-  return;
-}
-
-if (avatarFile.size > maxSize) {
-  alert(`文件大小不能超过 5MB。当前文件大小: ${(avatarFile.size / 1024 / 1024).toFixed(2)}MB`);
-  return;
-}
-      const formData = new FormData();
-      formData.append('avatar', avatarFile);
-
-    // 添加超时检测和错误反馈
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      controller.abort();
-      alert('头像上传超时，请稍后重试。');
-    }, 10000);
-
-    fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/auth/upload-avatar', {
-      method: 'POST',
-      body: formData,
-  })
-  
-      .then(response => {
-        clearTimeout(timeout); // 清除超时检测
-        if (!response.ok) {
-          throw new Error('上传头像失败');
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (data.avatarUrl) {
-          // 更新页面头像
-          document.getElementById('profile-avatar').src = `${data.avatarUrl}?timestamp=${Date.now()}`;
-        // 将 avatarUrl 加入更新的数据中
-        updatedUserInfo.avatarUrl = data.avatarUrl;
-        let userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
-        userInfo.avatarUrl = data.avatarUrl;
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        alert('头像上传成功！');
-        // 头像上传成功后再调用更新资料接口
-        updateProfile();
-      } else {
-        throw new Error('上传头像失败，未返回 URL');
-      }
-    })
-    .catch(error => {
-      clearTimeout(timeout);
-      console.error('头像上传错误:', error);
-      alert('上传头像失败，请稍后重试。');
-    });
-  } else {
-    // 如果没有头像文件，直接调用更新资料接口
-    updateProfile();
-  }
-
+  const avatarFile = document.getElementById('edit-avatar').files[0];
+  if (avatarFile) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']; // 允许的文件类型
+    const maxSize = 5 * 1024 * 1024; // 最大 5MB
+    if (!allowedTypes.includes(avatarFile.type)) {
+      alert(`文件格式无效，当前格式: ${avatarFile.type}。仅支持 JPG, PNG 或 GIF`);
+      return;
     }
+
+    if (avatarFile.size > maxSize) {
+      alert(`文件大小不能超过 5MB。当前文件大小: ${(avatarFile.size / 1024 / 1024).toFixed(2)}MB`);
+      return;
+    }
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+
+  // 添加超时检测和错误反馈
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+    alert('头像上传超时，请稍后重试。');
+  }, 10000);
+
+  fetch('https://websocket-server-o0o0.onrender.com/api/auth/upload-avatar', {
+    method: 'POST',
+    body: formData,
+    signal: controller.signal,
+  })
+    .then(response => {
+      clearTimeout(timeout); // 清除超时检测
+      if (!response.ok) {
+        throw new Error('上传头像失败');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.avatarUrl) {
+        // 更新页面头像
+        document.getElementById('profile-avatar').src = `${data.avatarUrl}?timestamp=${Date.now()}`;
+      // 将 avatarUrl 加入更新的数据中
+      updatedUserInfo.avatarUrl = data.avatarUrl;
+      let userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+      userInfo.avatarUrl = data.avatarUrl;
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      alert('头像上传成功！');
+      // 头像上传成功后再调用更新资料接口
+      updateProfile();
+    } else {
+      throw new Error('上传头像失败，未返回 URL');
+    }
+  })
+  .catch(error => {
+    clearTimeout(timeout);
+    console.error('头像上传错误:', error);
+    alert('上传头像失败，请稍后重试。');
+  });
+} else {
+  // 如果没有头像文件，直接调用更新资料接口
+  updateProfile();
+}
+
+  }
