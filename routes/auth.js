@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 // 引入身份验证中间件（示例）
 const authenticate = require('../middlewares/authenticate');
 
+
 // 配置 multer 中间件
 const multer = require('multer');
 const path = require('path');
@@ -57,10 +58,12 @@ router.post('/upload-avatar', authenticate, upload.single('avatar'), async (req,
       }
 
       if (!req.file) {
+          console.log("❌ 头像文件未检测到！");
           return res.status(400).json({ success: false, message: '未检测到头像文件' });
       }
 
-      console.log("✅ 上传成功的文件信息:", req.file); // 调试日志
+      console.log("✅ 上传成功的文件信息:", req.file); // 🔥 调试日志
+      console.log("📂 存储路径:", path.join(__dirname, '../uploads', req.file.filename));
 
       const avatarPath = `/uploads/${req.file.filename}`;
       let fullUrl = `https://${req.hostname}${avatarPath}`; // 强制 HTTPS

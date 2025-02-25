@@ -32,6 +32,15 @@ const io = new Server(server, {
     }
 });
 
+const fs = require('fs');
+// 确保 uploads 目录存在
+const uploadDirs = ['uploads', 'uploads/videos'];
+uploadDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`📂 目录 ${dir} 创建成功`);
+    }
+});
 
 // 🔌 连接数据库
 connectDB();
@@ -107,8 +116,13 @@ app.use('/api/chat', chatRoutes);
 
 // 静态资源
 app.use(express.static(path.join(__dirname, 'public'))); // 提供静态资源的目录
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { 
+    setHeaders: (res, path, stat) => {
+        res.set('Cross-Origin-Resource-Policy', 'cross-origin'); // 允许跨域访问资源
+    }
+}));
 app.use('/uploads/videos', express.static(path.join(__dirname, 'uploads/videos')));
+
 
 // 处理前端页面的路由
 app.get('/', (req, res) => {
@@ -161,6 +175,16 @@ io.on('connection', (socket) => {
     onlineUsers.get(userId).add(socket);
 
     console.log(`✅ WebSocket: 用户 ${userId} 连接成功`);
+    
+    socket.on("refresh_token", async (oldToken, callback) => {
+        try {
+            const newToken = await refreshToken(oldToken);
+            callback({ success: true, newToken });
+        } catch (err) {
+            callback({ success: false, error: "Token 刷新失败" });
+            socket.disconnect();
+        }
+    });
 
     socket.on("enter_chat", ({ to }) => {
         console.log(`📩 用户 ${socket.id} 进入聊天 ${to}`);
