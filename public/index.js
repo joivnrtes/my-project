@@ -1609,12 +1609,11 @@ if (avatarFile.size > maxSize) {
       alert('头像上传超时，请稍后重试。');
     }, 10000);
 
-    fetch('https://websocket-server-o0o0.onrender.com/api/auth/upload-avatar', {
+    fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/auth/upload-avatar', {
       method: 'POST',
       body: formData,
-      signal: controller.signal,
-      credentials: 'include' // ✅ 解决 CORS 问题
-})
+  })
+  
       .then(response => {
         clearTimeout(timeout); // 清除超时检测
         if (!response.ok) {
