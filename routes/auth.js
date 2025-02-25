@@ -50,22 +50,23 @@ router.post('/send-verification-code', authController.sendVerificationCode);
 router.post('/register', authController.register);
 
 // 上传头像路由
-router.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
+router.post('/upload-avatar', authenticate, upload.single('avatar'), async (req, res) => {
   try {
+      if (!req.user) {
+          return res.status(401).json({ success: false, message: '用户未认证' });
+      }
+
       if (!req.file) {
           return res.status(400).json({ success: false, message: '未检测到头像文件' });
       }
 
+      console.log("✅ 上传成功的文件信息:", req.file); // 调试日志
+
       const avatarPath = `/uploads/${req.file.filename}`;
       let fullUrl = `https://${req.hostname}${avatarPath}`; // 强制 HTTPS
 
-      // 更新用户头像URL
-      const user = await User.findById(req.user.id);
-      if (!user) {
-          return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-      user.avatarUrl = fullUrl;
-      await user.save();
+      req.user.avatarUrl = fullUrl;
+      await req.user.save();
 
       res.json({ success: true, avatarUrl: fullUrl });
   } catch (error) {
@@ -73,6 +74,7 @@ router.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
       res.status(500).json({ success: false, message: '服务器内部错误' });
   }
 });
+
 
 
 
@@ -158,8 +160,9 @@ router.post('/update-profile', authenticate, async (req, res) => {
     if (difficultylevel !== undefined) updateData.difficultylevel = difficultylevel;
     if (climbingduration !== undefined) updateData.climbingduration = climbingduration;
     if (climbingpreference !== undefined) updateData.climbingpreference = climbingpreference;
-    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
-    
+    if (avatarUrl !== undefined) {
+      updateData.avatarUrl = avatarUrl.replace(/^http:\/\//, 'https://'); // 强制 HTTPS
+  }
     // 更新数据库中对应用户的资料
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
     

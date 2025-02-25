@@ -29,7 +29,22 @@ async function fetchWithAuth(url, options = {}) {
       }
     }
 
-    return response.json();
+    // 🚀 解析返回数据
+    const data = await response.json();
+
+    // ✅ **自动修正 `http://` 的 `avatarUrl` 并更新 `localStorage`**
+    if (data.user && data.user.avatarUrl) {
+      data.user.avatarUrl = data.user.avatarUrl.replace(/^http:\/\//, 'https://');
+      
+      // 更新 localStorage
+      let userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+      userInfo.avatarUrl = data.user.avatarUrl;
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+      console.log("✅ 头像 URL 修正为 HTTPS:", data.user.avatarUrl);
+    }
+
+    return data;
   } catch (err) {
     console.error('❌ fetchWithAuth 请求失败:', err);
     throw err;
