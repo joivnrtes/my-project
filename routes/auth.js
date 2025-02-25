@@ -51,34 +51,7 @@ router.post('/send-verification-code', authController.sendVerificationCode);
 router.post('/register', authController.register);
 
 // 上传头像路由
-router.post('/upload-avatar', authenticate, upload.single('avatar'), async (req, res) => {
-  try {
-      if (!req.user) {
-          return res.status(401).json({ success: false, message: '用户未认证' });
-      }
-
-      if (!req.file) {
-          console.log("❌ 头像文件未检测到！");
-          return res.status(400).json({ success: false, message: '未检测到头像文件' });
-      }
-
-      console.log("✅ 上传成功的文件信息:", req.file); // 🔥 调试日志
-      console.log("📂 存储路径:", path.join(__dirname, '../uploads', req.file.filename));
-
-      const avatarPath = `/uploads/${req.file.filename}`;
-      let fullUrl = `https://${req.hostname}${avatarPath}`; // 强制 HTTPS
-
-      req.user.avatarUrl = fullUrl;
-      await req.user.save();
-
-      res.json({ success: true, avatarUrl: fullUrl });
-  } catch (error) {
-      console.error('上传头像错误:', error);
-      res.status(500).json({ success: false, message: '服务器内部错误' });
-  }
-});
-
-
+router.post('/upload-avatar', upload.single('avatar'), authController.uploadAvatar);
 
 
 // 用户登录
