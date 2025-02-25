@@ -1565,11 +1565,6 @@ async function refreshBeta() {
       function updateProfile() {
       fetchWithAuth('https://websocket-server-o0o0.onrender.com/api/auth/update-profile', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // 假设 token 存在 localStorage
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
       body: JSON.stringify(updatedUserInfo)
     })
     .then(data => {
@@ -1616,9 +1611,13 @@ if (avatarFile.size > maxSize) {
 
     fetch('https://websocket-server-o0o0.onrender.com/api/auth/upload-avatar', {
       method: 'POST',
+      headers: {
+          'Authorization': 'Bearer ' + localStorage.getItem('token')  // ✅ 确保包含 Token
+      },
       body: formData,
       signal: controller.signal,
-    })
+      credentials: 'include' // ✅ 解决 CORS 问题
+})
       .then(response => {
         clearTimeout(timeout); // 清除超时检测
         if (!response.ok) {
