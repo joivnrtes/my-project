@@ -24,7 +24,6 @@ const io = new Server(server, {
     cors: {
         origin: [
             "http://localhost:3000",
-            "https://my-project-flax-alpha.vercel.app",
             "https://websocket-server-o0o0.onrender.com"
         ],
         methods: ["GET", "POST"],
@@ -59,7 +58,7 @@ if (REDIS_URL) {
 // ✅ 让 Express 处理 API 请求
 app.use(express.json());
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://my-project-flax-alpha.vercel.app'],
+    origin: ['http://localhost:3000', 'https://websocket-server-o0o0.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
