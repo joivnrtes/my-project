@@ -83,11 +83,11 @@ app.use((req, res, next) => {
           "https://cdn.socket.io; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' https://websocket-server-o0o0.onrender.com https://websocket-server-o0o0.onrender.com/uploads/ data: blob:; " +
-        "media-src 'self' https://websocket-server-o0o0.onrender.com/uploads/;"
+        "media-src 'self' https://websocket-server-o0o0.onrender.com/uploads/ https://websocket-server-o0o0.onrender.com/uploads/videos/ blob: data:;"
     );
-    
     next();
 });
+
 
 
   
